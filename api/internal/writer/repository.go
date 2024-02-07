@@ -62,7 +62,7 @@ func (r *repository) GetExpressions(ctx context.Context) ([]domain.Expression, e
 	result := make([]domain.Expression, 0)
 	for rows.Next() {
 		var e domain.Expression
-		if err = rows.Scan(&e.Id, &e.Value, &e.Result, &e.State, e.CreatedAt, e.EvalStartedAt, e.EvalFinishedAt); err != nil {
+		if err = rows.Scan(&e.Id, &e.Value, &e.Result, &e.State, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, e)

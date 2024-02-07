@@ -27,6 +27,10 @@ func (s *service) RegisterExpression(ctx context.Context, value string) (int64, 
 	if err := s.writerService.CreateExpression(ctx, &expr); err != nil {
 		return 0, err
 	}
+	if err := s.writerService.SaveExpressionResult(ctx, expr.Id, 6); err != nil {
+		return 0, err
+	}
+
 	if err := s.producer.SendMessage("", "text/plain", expr.Id); err != nil {
 		return 0, err
 	}

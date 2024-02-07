@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
-	"github.com/VadimGossip/calculator/api/internal/orchestrator"
+	"github.com/VadimGossip/calculator/api/internal/manager"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
 	"github.com/VadimGossip/calculator/api/internal/writer"
 )
@@ -14,10 +14,9 @@ type Factory struct {
 
 	rabbitConn     rabbitmq.Connection
 	rabbitProducer rabbitmq.Producer
-	rabbitConsumer rabbitmq.Consumer
 	rabbitService  rabbitmq.Service
 
-	orchestratorService orchestrator.Service
+	managerService manager.Service
 }
 
 var factory *Factory
@@ -27,9 +26,8 @@ func newFactory(cfg *domain.Config, dbAdapter *DBAdapter) *Factory {
 	factory.rabbitConn = rabbitmq.NewConnection(cfg.AMPQServerConfig.Url)
 	factory.rabbitProducer = rabbitmq.NewProducer(cfg.AMPQStructCfg, factory.rabbitConn)
 	factory.rabbitService = rabbitmq.NewService(factory.rabbitConn)
-	factory.rabbitConsumer = rabbitmq.NewConsumer(cfg.AMPQStructCfg, factory.rabbitConn)
 
 	factory.writerService = writer.NewService(dbAdapter.writerRepo)
-	factory.orchestratorService = orchestrator.NewService(factory.writerService, factory.rabbitProducer)
+	factory.managerService = manager.NewService(factory.writerService, factory.rabbitProducer)
 	return factory
 }

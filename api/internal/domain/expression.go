@@ -1,10 +1,10 @@
-package writer
+package domain
 
 const (
-	NewState        = "New"
-	ErrorState      = "Error"
-	InProgressState = "In Progress"
-	OkState         = "Ok"
+	ExpressionStateNew        = "New"
+	ExpressionStateError      = "Error"
+	ExpressionStateInProgress = "In Progress"
+	ExpressionStateOK         = "Ok"
 )
 
 type Expression struct {

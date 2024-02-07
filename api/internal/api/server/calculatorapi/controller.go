@@ -2,7 +2,7 @@ package calculatorapi
 
 import (
 	"fmt"
-	"github.com/VadimGossip/calculator/api/internal/orchestrator"
+	"github.com/VadimGossip/calculator/api/internal/manager"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -13,13 +13,13 @@ type Controller interface {
 }
 
 type controller struct {
-	orchestratorService orchestrator.Service
+	managerService manager.Service
 }
 
 var _ Controller = (*controller)(nil)
 
-func NewController(orchestratorService orchestrator.Service) *controller {
-	return &controller{orchestratorService: orchestratorService}
+func NewController(managerService manager.Service) *controller {
+	return &controller{managerService: managerService}
 }
 
 func (ctrl *controller) CreateExpression(c *gin.Context) {
@@ -33,15 +33,28 @@ func (ctrl *controller) CreateExpression(c *gin.Context) {
 		return
 	}
 	//validateService
-	id, err := ctrl.orchestratorService.RegisterExpression(c.Request.Context(), req.ExpressionValue)
+	id, err := ctrl.managerService.RegisterExpression(c.Request.Context(), req.ExpressionValue)
 	if err != nil {
 		errMsg := fmt.Sprintf("create expression error: %s", err)
 		logrus.WithFields(logrus.Fields{
 			"request": "CreateExpression",
 		}).Error(errMsg)
-		c.JSON(http.StatusInternalServerError, CreateExpressionResponse{Status: http.StatusInternalServerError})
+		c.JSON(http.StatusInternalServerError, CreateExpressionResponse{Error: errMsg, Status: http.StatusInternalServerError})
 		return
 	}
 
 	c.JSON(http.StatusOK, CreateExpressionResponse{Id: id, Status: http.StatusOK})
+}
+
+func (ctrl *controller) GetAllExpressions(c *gin.Context) {
+	expressions, err := ctrl.managerService.GetExpressions(c.Request.Context())
+	if err != nil {
+		errMsg := fmt.Sprintf("get all expressions: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "CreateAllExpressions",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, GetExpressionsResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	c.JSON(http.StatusOK, GetExpressionsResponse{Expressions: expressions, Status: http.StatusOK})
 }

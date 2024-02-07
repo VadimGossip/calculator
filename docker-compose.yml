@@ -30,7 +30,7 @@ services:
       - 8080:8080
     build:
       context: .
-      dockerfile: Dockerfile-calculator-api
+      dockerfile: dockerfile-calculator-api
     restart: always
     networks:
       - calculator-network

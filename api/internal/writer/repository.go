@@ -9,10 +9,9 @@ import (
 
 type Repository interface {
 	CreateExpression(ctx context.Context, e *domain.Expression) error
+	StartExpressionEval(ctx context.Context, id int64) error
 	SaveExpressionResult(ctx context.Context, id int64, result int) error
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
-	//UpdateExpressionState(id int64, state string) error
-	//GetExpressions() ([]Expression, error)
 }
 
 type repository struct {
@@ -34,12 +33,25 @@ func (r *repository) CreateExpression(ctx context.Context, e *domain.Expression)
 		Scan(&e.Id)
 }
 
+func (r *repository) StartExpressionEval(ctx context.Context, id int64) error {
+	updStmt := `UPDATE expressions 
+                   SET state = $1,
+                       eval_started_at = $2
+                 WHERE id =$3;`
+	_, err := r.db.ExecContext(ctx, updStmt, domain.ExpressionStateInProgress, time.Now(), id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *repository) SaveExpressionResult(ctx context.Context, id int64, result int) error {
 	updStmt := `UPDATE expressions 
                    SET result = $1, 
-                       state = $2
-                 WHERE id =$3;`
-	_, err := r.db.ExecContext(ctx, updStmt, result, domain.ExpressionStateOK, id)
+                       state = $2,
+                       eval_finished_at = $3
+                 WHERE id =$4;`
+	_, err := r.db.ExecContext(ctx, updStmt, result, domain.ExpressionStateOK, time.Now(), id)
 	if err != nil {
 		return err
 	}

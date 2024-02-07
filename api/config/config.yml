@@ -1,0 +1,21 @@
+app_http:
+     port: 8080
+
+ampq_queue_server:
+  url: "amqp://guest:guest@message-broker:5672/"
+ampq_queue_struct:
+  work_exchange:
+    name: "CalculatorWorkExchange"
+  retry_exchange:
+    name: "CalculatorRetryExchange"
+  consumer:
+    exchange_name:  "CalculatorWorkExchange"
+    query_name: "CalculatorWorkQueue"
+  queries: [
+    {name: "CalculatorWorkQueue", dlx: "CalculatorRetryExchange", ttl: -1},
+    {name: "CalculatorRetryQueue", dlx: "CalculatorWorkExchange", ttl: 20000},
+  ]
+  binds:  [
+    {query_name: "CalculatorWorkQueue", exchange_name: "CalculatorWorkExchange"},
+    {query_name: "CalculatorRetryQueue", exchange_name: "CalculatorRetryExchange"},
+  ]

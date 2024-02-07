@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: calculator_db
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/apps/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=calculator_db
+    restart: always
+    networks:
+      - calculator-network
+  message-broker:
+    image: rabbitmq:3-management-alpine
+    container_name: message-broker
+    ports:
+      - 5672:5672 # for sender and consumer connections
+      - 15672:15672 # for serve RabbitMQ GUI
+    restart: always
+    networks:
+      - calculator-network
+  calculator-api:
+    container_name: calculator-api
+    ports:
+      - 8080:8080
+    build:
+      context: api
+      dockerfile: dockerfile-calculatorApi
+    restart: always
+    networks:
+      - calculator-network
+    depends_on:
+      - postgres
+      - message-broker
+
+networks:
+  # Create a new Docker network.
+  calculator-network:
+    driver: bridge

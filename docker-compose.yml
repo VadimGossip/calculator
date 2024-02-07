@@ -37,6 +37,16 @@ services:
     depends_on:
       - postgres
       - message-broker
+  calculator-agent:
+    container_name: calculator-agent
+    build:
+      context: .
+      dockerfile: dockerfile-calculator-agent
+    restart: always
+    networks:
+      - calculator-network
+    depends_on:
+      - message-broker
 
 networks:
   # Create a new Docker network.

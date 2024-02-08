@@ -14,6 +14,11 @@ type GetExpressionsResponse struct {
 	Status      int                 `json:"status" example:"200"`
 }
 
+type CommonResponse struct {
+	Error  string `json:"error,omitempty"`
+	Status int    `json:"status" example:"200"`
+}
+
 type GetAgentsResponse struct {
 	Agents []domain.Agent `json:"agents"`
 	Error  string         `json:"error,omitempty"`

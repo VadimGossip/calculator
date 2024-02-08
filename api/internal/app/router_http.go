@@ -10,6 +10,8 @@ func initHttpRouter(app *App) {
 	s.POST("/expression", c.CreateExpression)
 
 	s.GET("/agent", c.GetAllAgents)
+	s.POST("/agent", c.AgentHeartbeat)
 
 	s.GET("/duration", c.GetAllOperationDurations)
+	s.POST("/duration", c.SaveOperationDurations)
 }

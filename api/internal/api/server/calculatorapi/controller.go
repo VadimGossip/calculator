@@ -59,6 +59,24 @@ func (ctrl *controller) GetAllExpressions(c *gin.Context) {
 	c.JSON(http.StatusOK, GetExpressionsResponse{Expressions: expressions, Status: http.StatusOK})
 }
 
+func (ctrl *controller) AgentHeartbeat(c *gin.Context) {
+	var err error
+	if err = c.Request.ParseForm(); err != nil {
+		c.JSON(http.StatusBadRequest, CommonResponse{Status: http.StatusBadRequest, Error: "parse request error " + err.Error()})
+		return
+	}
+	if err = ctrl.managerService.SaveAgentHeartbeat(c.Request.Context(), c.Request.Form.Get("name")); err != nil {
+		errMsg := fmt.Sprintf("Register agent heartbeat error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "AgentHeartbeat",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, CommonResponse{Status: http.StatusInternalServerError, Error: errMsg})
+		return
+	}
+
+	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
+}
+
 func (ctrl *controller) GetAllAgents(c *gin.Context) {
 	agents, err := ctrl.managerService.GetAgents(c.Request.Context())
 	if err != nil {
@@ -70,6 +88,27 @@ func (ctrl *controller) GetAllAgents(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, GetAgentsResponse{Agents: agents, Status: http.StatusOK})
+}
+
+func (ctrl *controller) SaveOperationDurations(c *gin.Context) {
+	operationDurations := make(map[string]uint16)
+	if err := c.BindJSON(&operationDurations); err != nil {
+		errMsg := fmt.Sprintf("Parse request error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "SaveOperationDurations",
+		}).Error(errMsg)
+		c.JSON(http.StatusBadRequest, CommonResponse{Error: errMsg, Status: http.StatusBadRequest})
+		return
+	}
+	if err := ctrl.managerService.SaveOperationDurations(c.Request.Context(), operationDurations); err != nil {
+		errMsg := fmt.Sprintf("save operation durations error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "SaveOperationDurations",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, CommonResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
 }
 
 func (ctrl *controller) GetAllOperationDurations(c *gin.Context) {

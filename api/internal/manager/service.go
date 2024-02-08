@@ -15,7 +15,9 @@ type service struct {
 type Service interface {
 	RegisterExpression(ctx context.Context, value string) (int64, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
+	SaveOperationDurations(ctx context.Context, data map[string]uint16) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 }
 
@@ -45,8 +47,21 @@ func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, erro
 	return s.writerService.GetExpressions(ctx)
 }
 
+func (s *service) SaveAgentHeartbeat(ctx context.Context, name string) error {
+	return s.writerService.SaveAgentHeartbeat(ctx, name)
+}
+
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 	return s.writerService.GetAgents(ctx)
+}
+
+func (s *service) SaveOperationDurations(ctx context.Context, data map[string]uint16) error {
+	for key, value := range data {
+		if err := s.writerService.SaveOperationDuration(ctx, key, value); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {

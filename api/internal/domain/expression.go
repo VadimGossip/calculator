@@ -18,3 +18,8 @@ type Expression struct {
 	EvalStartedAt  *time.Time `json:"eval_started_at"`
 	EvalFinishedAt *time.Time `json:"eval_finished_at"`
 }
+
+type QueueExpression struct {
+	Id    int64  `json:"expression_id"`
+	Value string `json:"expression_value"`
+}

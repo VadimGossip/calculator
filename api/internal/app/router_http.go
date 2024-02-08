@@ -8,4 +8,8 @@ func initHttpRouter(app *App) {
 	c := calculatorapi.NewController(app.managerService)
 	s.GET("/expression", c.GetAllExpressions)
 	s.POST("/expression", c.CreateExpression)
+
+	s.GET("/agent", c.GetAllAgents)
+
+	s.GET("/duration", c.GetAllOperationDurations)
 }

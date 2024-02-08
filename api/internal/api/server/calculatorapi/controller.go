@@ -58,3 +58,29 @@ func (ctrl *controller) GetAllExpressions(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, GetExpressionsResponse{Expressions: expressions, Status: http.StatusOK})
 }
+
+func (ctrl *controller) GetAllAgents(c *gin.Context) {
+	agents, err := ctrl.managerService.GetAgents(c.Request.Context())
+	if err != nil {
+		errMsg := fmt.Sprintf("get all agents: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "CreateAllAgents",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, GetAgentsResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	c.JSON(http.StatusOK, GetAgentsResponse{Agents: agents, Status: http.StatusOK})
+}
+
+func (ctrl *controller) GetAllOperationDurations(c *gin.Context) {
+	operationDurations, err := ctrl.managerService.GetOperationDurations(c.Request.Context())
+	if err != nil {
+		errMsg := fmt.Sprintf("get all operation durations: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "GetAllOperationDurations",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, GetOperationDurationsResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	c.JSON(http.StatusOK, GetOperationDurationsResponse{OperationDuration: operationDurations, Status: http.StatusOK})
+}

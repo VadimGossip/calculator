@@ -15,6 +15,8 @@ type service struct {
 type Service interface {
 	RegisterExpression(ctx context.Context, value string) (int64, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetAgents(ctx context.Context) ([]domain.Agent, error)
+	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 }
 
 var _ Service = (*service)(nil)
@@ -41,4 +43,12 @@ func (s *service) RegisterExpression(ctx context.Context, value string) (int64, 
 
 func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
 	return s.writerService.GetExpressions(ctx)
+}
+
+func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
+	return s.writerService.GetAgents(ctx)
+}
+
+func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {
+	return s.writerService.GetOperationDurations(ctx)
 }

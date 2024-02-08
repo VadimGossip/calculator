@@ -9,7 +9,19 @@ type CreateExpressionResponse struct {
 }
 
 type GetExpressionsResponse struct {
-	Expressions []domain.Expression `json:"expressions,omitempty"`
+	Expressions []domain.Expression `json:"expressions"`
 	Error       string              `json:"error,omitempty"`
 	Status      int                 `json:"status" example:"200"`
+}
+
+type GetAgentsResponse struct {
+	Agents []domain.Agent `json:"agents"`
+	Error  string         `json:"error,omitempty"`
+	Status int            `json:"status" example:"200"`
+}
+
+type GetOperationDurationsResponse struct {
+	OperationDuration []domain.OperationDuration `json:"operation_durations"`
+	Error             string                     `json:"error,omitempty"`
+	Status            int                        `json:"status" example:"200"`
 }

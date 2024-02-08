@@ -12,6 +12,14 @@ type Repository interface {
 	StartExpressionEval(ctx context.Context, id int64) error
 	SaveExpressionResult(ctx context.Context, id int64, result int) error
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetAgent(ctx context.Context, key string) (domain.Agent, error)
+	CreateAgent(ctx context.Context, name string) error
+	SetAgentHeartbeatAt(ctx context.Context, name string) error
+	GetAgents(ctx context.Context) ([]domain.Agent, error)
+	GetOperationDuration(ctx context.Context, name string) (domain.OperationDuration, error)
+	CreateOperationDuration(ctx context.Context, name string, duration uint16) error
+	UpdateOperationDuration(ctx context.Context, name string, duration uint16) error
+	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 }
 
 type repository struct {
@@ -78,6 +86,115 @@ func (r *repository) GetExpressions(ctx context.Context) ([]domain.Expression, e
 			return nil, err
 		}
 		result = append(result, e)
+	}
+	return result, nil
+}
+
+func (r *repository) GetAgent(ctx context.Context, key string) (domain.Agent, error) {
+	var a domain.Agent
+	selectStmt := `SELECT name
+                         ,created_at
+                         ,last_heartbeat_at
+                     FROM agents
+                    WHERE name = $1;`
+	return a, r.db.QueryRowContext(ctx, selectStmt, key).Scan(&a.Name, &a.CreatedAt, &a.LastHeartbeatAt)
+}
+
+func (r *repository) CreateAgent(ctx context.Context, name string) error {
+	createStmt := `INSERT 
+                     INTO agents(name, created_at, last_heartbeat_at)
+		           VALUES ($1, $2, $3);`
+
+	_, err := r.db.ExecContext(ctx, createStmt, name, time.Now(), time.Now())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) SetAgentHeartbeatAt(ctx context.Context, name string) error {
+	updStmt := `UPDATE agents 
+                   SET last_heartbeat_at = $1
+                 WHERE name =$1;`
+	_, err := r.db.ExecContext(ctx, updStmt, time.Now(), name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) GetAgents(ctx context.Context) ([]domain.Agent, error) {
+	selectStmt := `SELECT name
+                         ,created_at
+                         ,last_heartbeat_at
+                     FROM agents;`
+	rows, err := r.db.QueryContext(ctx, selectStmt)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.Agent, 0)
+	for rows.Next() {
+		var a domain.Agent
+		if err = rows.Scan(&a.Name, &a.CreatedAt, &a.LastHeartbeatAt); err != nil {
+			return nil, err
+		}
+		result = append(result, a)
+	}
+	return result, nil
+}
+
+func (r *repository) GetOperationDuration(ctx context.Context, name string) (domain.OperationDuration, error) {
+	var d domain.OperationDuration
+	selectStmt := `SELECT operation_name
+                         ,duration
+                         ,created_at
+                         ,updated_at
+                     FROM operation_durations
+                    WHERE operation_name = $1;`
+	return d, r.db.QueryRowContext(ctx, selectStmt, name).Scan(&d.Name, &d.Duration, &d.CreatedAt, &d.UpdatedAt)
+}
+
+func (r *repository) CreateOperationDuration(ctx context.Context, name string, duration uint16) error {
+	createStmt := `INSERT 
+                     INTO operation_durations(operation_name, duration, created_at, updated_at)
+		           VALUES ($1, $2, $3, $4);`
+
+	_, err := r.db.ExecContext(ctx, createStmt, name, duration, time.Now(), time.Now())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) UpdateOperationDuration(ctx context.Context, name string, duration uint16) error {
+	updStmt := `UPDATE operation_durations 
+                   SET duration = $1
+                      ,updated_at = $2
+                 WHERE operation_name = $3;`
+	_, err := r.db.ExecContext(ctx, updStmt, time.Now(), duration, time.Now(), name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {
+	selectStmt := `SELECT operation_name
+                         ,duration
+                         ,created_at
+                         ,updated_at
+                     FROM operation_durations;`
+	rows, err := r.db.QueryContext(ctx, selectStmt)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.OperationDuration, 0)
+	for rows.Next() {
+		var d domain.OperationDuration
+		if err = rows.Scan(&d.Name, &d.Duration, &d.CreatedAt, &d.UpdatedAt); err != nil {
+			return nil, err
+		}
+		result = append(result, d)
 	}
 	return result, nil
 }

@@ -24,6 +24,7 @@ func NewController(managerService manager.Service) *controller {
 
 func (ctrl *controller) CreateExpression(c *gin.Context) {
 	var req CreateExpressionRequest
+
 	if err := c.BindJSON(&req); err != nil {
 		errMsg := fmt.Sprintf("Parse request error: %s", err)
 		logrus.WithFields(logrus.Fields{

@@ -12,8 +12,9 @@ create table expressions
 
 create table agents
 (
-    name   varchar(255)  not null unique,
-    created_at       timestamp default now() not null,
+    id                serial                  not null unique,
+    name              varchar(255)  not null unique,
+    created_at        timestamp default now() not null,
     last_heartbeat_at timestamp default now() not null
 );
 
@@ -23,5 +24,19 @@ create table operation_durations
     duration         numeric(3) not null,
     created_at       timestamp default now() not null,
     updated_at       timestamp default now() not null
-)
+);
 
+
+create table sub_expressions
+(
+    id                 serial                  not null unique,
+    expressions_id     integer,
+    val1               integer,
+    val2               integer,
+    sub_expression_id1 integer,
+    sub_expression_id2 integer,
+    operation_name     varchar(255) not null,
+    result             integer,
+    agent_id           integer,
+    is_last            boolean default false
+);

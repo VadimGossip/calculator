@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Repository interface {
 	CreateOperationDuration(ctx context.Context, name string, duration uint16) error
 	UpdateOperationDuration(ctx context.Context, name string, duration uint16) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
+	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 }
 
 type repository struct {
@@ -30,6 +32,45 @@ var _ Repository = (*repository)(nil)
 
 func NewRepository(db *sql.DB) *repository {
 	return &repository{db}
+}
+
+func valPointerToNullVal(val any) any {
+	switch v := val.(type) {
+	case *int:
+		if val == (*int)(nil) {
+			return sql.NullInt32{}
+		}
+		return sql.NullInt32{
+			Int32: int32(*v),
+			Valid: true,
+		}
+	case *int32:
+		if val == (*int32)(nil) {
+			return sql.NullInt32{}
+		}
+		return sql.NullInt32{
+			Int32: *v,
+			Valid: true,
+		}
+	case *int64:
+		if val == (*int64)(nil) {
+			return sql.NullInt64{}
+		}
+		return sql.NullInt64{
+			Int64: *v,
+			Valid: true,
+		}
+	case *float64:
+		if val == (*float64)(nil) {
+			return sql.NullFloat64{}
+		}
+		return sql.NullFloat64{
+			Float64: *v,
+			Valid:   true,
+		}
+	default:
+		return nil
+	}
 }
 
 func (r *repository) CreateExpression(ctx context.Context, e *domain.Expression) error {
@@ -197,4 +238,16 @@ func (r *repository) GetOperationDurations(ctx context.Context) ([]domain.Operat
 		result = append(result, d)
 	}
 	return result, nil
+}
+
+func (r *repository) CreateSubExpression(ctx context.Context, s *domain.SubExpression) error {
+	createStmt := `INSERT 
+                     INTO sub_expressions(expression_id, val1, val2, sub_expression_id1, sub_expression_id2, operation_name, is_last) 
+                   VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id into $1;`
+	_, err := r.db.ExecContext(ctx, createStmt, s.ExpressionsId, valPointerToNullVal(s.Val1), valPointerToNullVal(s.Val2), valPointerToNullVal(s.SubExpressionId1), valPointerToNullVal(s.SubExpressionId2), s.OperationName, s.IsLast, s.Id)
+	if err != nil {
+		return errors.Wrap(err, "failed to create sub expression")
+	}
+	return nil
 }

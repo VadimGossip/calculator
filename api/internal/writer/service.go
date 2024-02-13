@@ -18,6 +18,9 @@ type Service interface {
 	SaveOperationDuration(ctx context.Context, name string, duration uint16) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
+	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
+	StopSubExpressionEval(ctx context.Context, seId int64, result float64) error
+	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
 }
 
 var _ Service = (*service)(nil)
@@ -70,4 +73,16 @@ func (s *service) GetOperationDurations(ctx context.Context) ([]domain.Operation
 
 func (s *service) CreateSubExpression(ctx context.Context, se *domain.SubExpression) error {
 	return s.repo.CreateSubExpression(ctx, se)
+}
+
+func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error) {
+	return s.repo.StartSubExpressionEval(ctx, seId, agent)
+}
+
+func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result float64) error {
+	return s.repo.StopSubExpressionEval(ctx, seId, result)
+}
+
+func (s *service) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
+	return s.repo.GetReadySubExpressions(ctx, expressionId)
 }

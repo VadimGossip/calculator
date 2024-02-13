@@ -2,7 +2,7 @@ package calculatorapi
 
 import (
 	"fmt"
-	"github.com/VadimGossip/calculator/api/internal/manager"
+	"github.com/VadimGossip/calculator/api/internal/expression"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -13,13 +13,13 @@ type Controller interface {
 }
 
 type controller struct {
-	managerService manager.Service
+	expressionService expression.Service
 }
 
 var _ Controller = (*controller)(nil)
 
-func NewController(managerService manager.Service) *controller {
-	return &controller{managerService: managerService}
+func NewController(expressionService expression.Service) *controller {
+	return &controller{expressionService: expressionService}
 }
 
 func (ctrl *controller) CreateExpression(c *gin.Context) {
@@ -34,7 +34,7 @@ func (ctrl *controller) CreateExpression(c *gin.Context) {
 		return
 	}
 	//validateService
-	id, err := ctrl.managerService.RegisterExpression(c.Request.Context(), req.ExpressionValue)
+	id, err := ctrl.expressionService.RegisterExpression(c.Request.Context(), req.ExpressionValue)
 	if err != nil {
 		errMsg := fmt.Sprintf("create expression error: %s", err)
 		logrus.WithFields(logrus.Fields{
@@ -48,7 +48,7 @@ func (ctrl *controller) CreateExpression(c *gin.Context) {
 }
 
 func (ctrl *controller) GetAllExpressions(c *gin.Context) {
-	expressions, err := ctrl.managerService.GetExpressions(c.Request.Context())
+	expressions, err := ctrl.expressionService.GetExpressions(c.Request.Context())
 	if err != nil {
 		errMsg := fmt.Sprintf("get all expressions: %s", err)
 		logrus.WithFields(logrus.Fields{
@@ -66,7 +66,7 @@ func (ctrl *controller) AgentHeartbeat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, CommonResponse{Status: http.StatusBadRequest, Error: "parse request error " + err.Error()})
 		return
 	}
-	if err = ctrl.managerService.SaveAgentHeartbeat(c.Request.Context(), c.Request.Form.Get("name")); err != nil {
+	if err = ctrl.expressionService.SaveAgentHeartbeat(c.Request.Context(), c.Request.Form.Get("name")); err != nil {
 		errMsg := fmt.Sprintf("Register agent heartbeat error: %s", err)
 		logrus.WithFields(logrus.Fields{
 			"request": "AgentHeartbeat",
@@ -79,7 +79,7 @@ func (ctrl *controller) AgentHeartbeat(c *gin.Context) {
 }
 
 func (ctrl *controller) GetAllAgents(c *gin.Context) {
-	agents, err := ctrl.managerService.GetAgents(c.Request.Context())
+	agents, err := ctrl.expressionService.GetAgents(c.Request.Context())
 	if err != nil {
 		errMsg := fmt.Sprintf("get all agents: %s", err)
 		logrus.WithFields(logrus.Fields{
@@ -101,7 +101,7 @@ func (ctrl *controller) SaveOperationDurations(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, CommonResponse{Error: errMsg, Status: http.StatusBadRequest})
 		return
 	}
-	if err := ctrl.managerService.SaveOperationDurations(c.Request.Context(), operationDurations); err != nil {
+	if err := ctrl.expressionService.SaveOperationDurations(c.Request.Context(), operationDurations); err != nil {
 		errMsg := fmt.Sprintf("save operation durations error: %s", err)
 		logrus.WithFields(logrus.Fields{
 			"request": "SaveOperationDurations",
@@ -113,7 +113,7 @@ func (ctrl *controller) SaveOperationDurations(c *gin.Context) {
 }
 
 func (ctrl *controller) GetAllOperationDurations(c *gin.Context) {
-	operationDurations, err := ctrl.managerService.GetOperationDurations(c.Request.Context())
+	operationDurations, err := ctrl.expressionService.GetOperationDurations(c.Request.Context())
 	if err != nil {
 		errMsg := fmt.Sprintf("get all operation durations: %s", err)
 		logrus.WithFields(logrus.Fields{

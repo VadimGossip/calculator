@@ -23,7 +23,7 @@ type Repository interface {
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result float64) error
-	GetReadySubExpressions(ctx context.Context) ([]domain.SubExpression, error)
+	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
 }
 
 type repository struct {
@@ -279,7 +279,7 @@ func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, resu
 	return nil
 }
 
-func (r *repository) GetReadySubExpressions(ctx context.Context) ([]domain.SubExpression, error) {
+func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
 	selectStmt := `select se.id
                         ,coalesce(se.val1, se1.result) as val1
               			,coalesce(se.val2, se2.result) as val2
@@ -288,10 +288,11 @@ func (r *repository) GetReadySubExpressions(ctx context.Context) ([]domain.SubEx
                left join sub_expressions se1 on se.sub_expression_id1 = se1.id
                left join sub_expressions se2 on se.sub_expression_id2 = se2.id
                    where se.eval_started_at is null
+                     and se.expression_id = nvl($1, se.expression_id) 
                      and coalesce(se.val1, se1.result) is not null
                      and coalesce(se.val2, se2.result) is not null;`
 
-	rows, err := r.db.QueryContext(ctx, selectStmt)
+	rows, err := r.db.QueryContext(ctx, selectStmt, valPointerToNullVal(expressionId))
 	if err != nil {
 		return nil, err
 	}

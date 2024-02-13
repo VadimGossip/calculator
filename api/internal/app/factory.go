@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
-	"github.com/VadimGossip/calculator/api/internal/manager"
+	"github.com/VadimGossip/calculator/api/internal/expression"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
 	"github.com/VadimGossip/calculator/api/internal/writer"
@@ -18,7 +18,7 @@ type Factory struct {
 	rabbitService  rabbitmq.Service
 
 	parseService   parser.Service
-	managerService manager.Service
+	managerService expression.Service
 }
 
 var factory *Factory
@@ -31,6 +31,6 @@ func newFactory(cfg *domain.Config, dbAdapter *DBAdapter) *Factory {
 
 	factory.writerService = writer.NewService(dbAdapter.writerRepo)
 	factory.parseService = parser.NewService()
-	factory.managerService = manager.NewService(factory.parseService, factory.writerService, factory.rabbitProducer)
+	factory.managerService = expression.NewService(factory.parseService, factory.writerService, factory.rabbitProducer)
 	return factory
 }

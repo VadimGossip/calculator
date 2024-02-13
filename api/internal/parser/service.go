@@ -125,7 +125,7 @@ func (s *service) ParseExpression(e domain.Expression) []domain.SubExpression {
 			Val1:         item.first,
 			Val2:         item.second,
 			Operation:    item.operation,
-			IsLast:       idx == len(seItems),
+			IsLast:       idx == len(seItems)-1,
 		}
 		if item.prevSe1 != nil {
 			se.SubExpressionId1 = &item.prevSe1.id

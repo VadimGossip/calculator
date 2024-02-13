@@ -288,7 +288,7 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
                left join sub_expressions se1 on se.sub_expression_id1 = se1.id
                left join sub_expressions se2 on se.sub_expression_id2 = se2.id
                    where se.eval_started_at is null
-                     and se.expression_id = nvl($1, se.expression_id) 
+                     and se.expression_id = coalesce($1, se.expression_id) 
                      and coalesce(se.val1, se1.result) is not null
                      and coalesce(se.val2, se2.result) is not null;`
 

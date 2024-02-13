@@ -2,6 +2,7 @@ package expression
 
 import (
 	"context"
+	"fmt"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
@@ -46,6 +47,7 @@ func (s *service) prepareSubExpressionQueryData(ctx context.Context, expressionI
 		}
 		result = append(result, item)
 	}
+	fmt.Println(result)
 	return result, nil
 }
 

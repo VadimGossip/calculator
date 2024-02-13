@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"unicode"
@@ -127,6 +128,7 @@ func (s *service) ParseExpression(e domain.Expression) []domain.SubExpression {
 			Operation:    item.operation,
 			IsLast:       idx == len(seItems)-1,
 		}
+		logrus.Infof("idx %d, len(seItems)-1 %d", idx, len(seItems)-1)
 		if item.prevSe1 != nil {
 			se.SubExpressionId1 = &item.prevSe1.id
 		}

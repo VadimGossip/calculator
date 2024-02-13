@@ -12,15 +12,10 @@ const (
 type Expression struct {
 	Id             int64      `json:"expression_id"`
 	Value          string     `json:"expression_value"`
-	Result         *int       `json:"result"`
+	Result         *float64   `json:"result"`
 	State          string     `json:"status"`
-	EvalError      string     `json:"eval_error"`
+	ErrorMsg       string     `json:"error_msg"`
 	CreatedAt      time.Time  `json:"created_at"`
 	EvalStartedAt  *time.Time `json:"eval_started_at"`
 	EvalFinishedAt *time.Time `json:"eval_finished_at"`
-}
-
-type QueueExpression struct {
-	Id    int64  `json:"expression_id"`
-	Value string `json:"expression_value"`
 }

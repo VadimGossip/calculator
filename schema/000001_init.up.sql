@@ -5,6 +5,7 @@ create table expressions
     value            varchar(255)            not null,
     result           integer,
     state            varchar(255)            not null,
+    error_msg        varchar(2000),
     created_at       timestamp default now() not null,
     eval_started_at  timestamp,
     eval_finished_at timestamp

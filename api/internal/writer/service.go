@@ -11,7 +11,8 @@ type service struct {
 
 type Service interface {
 	CreateExpression(ctx context.Context, e *domain.Expression) error
-	SaveExpressionResult(ctx context.Context, id int64, result int) error
+	UpdateExpression(ctx context.Context, e domain.Expression) error
+	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
@@ -33,8 +34,11 @@ func (s *service) CreateExpression(ctx context.Context, e *domain.Expression) er
 	return s.repo.CreateExpression(ctx, e)
 }
 
-func (s *service) SaveExpressionResult(ctx context.Context, id int64, result int) error {
-	return s.repo.SaveExpressionResult(ctx, id, result)
+func (s *service) UpdateExpression(ctx context.Context, e domain.Expression) error {
+	return s.repo.UpdateExpression(ctx, e)
+}
+func (s *service) GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error) {
+	return s.repo.GetExpressionSummaryBySeId(ctx, seId)
 }
 
 func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {

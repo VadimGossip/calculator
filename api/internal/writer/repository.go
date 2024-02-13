@@ -9,8 +9,8 @@ import (
 
 type Repository interface {
 	CreateExpression(ctx context.Context, e *domain.Expression) error
-	StartExpressionEval(ctx context.Context, id int64) error
-	SaveExpressionResult(ctx context.Context, id int64, result int) error
+	UpdateExpression(ctx context.Context, e domain.Expression) error
+	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	GetAgent(ctx context.Context, key string) (domain.Agent, error)
 	CreateAgent(ctx context.Context, name string) error
@@ -23,6 +23,8 @@ type Repository interface {
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result float64) error
+	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
+	DeleteSubExpressions(ctx context.Context, seId int64) error
 	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
 }
 
@@ -84,29 +86,48 @@ func (r *repository) CreateExpression(ctx context.Context, e *domain.Expression)
 		Scan(&e.Id)
 }
 
-func (r *repository) StartExpressionEval(ctx context.Context, id int64) error {
+func (r *repository) UpdateExpression(ctx context.Context, e domain.Expression) error {
 	updStmt := `UPDATE expressions 
-                   SET state = $1,
-                       eval_started_at = $2
-                 WHERE id =$3;`
-	_, err := r.db.ExecContext(ctx, updStmt, domain.ExpressionStateInProgress, time.Now(), id)
+                   SET result =$1,
+                       state = $2,
+                       error_msg =$3,
+                       eval_started_at = $4,
+                       eval_finished_at = $5
+                 WHERE id = $6;`
+	_, err := r.db.ExecContext(ctx, updStmt, valPointerToNullVal(e.Result), e.State, e.ErrorMsg, e.EvalStartedAt, e.EvalFinishedAt, e.Id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *repository) SaveExpressionResult(ctx context.Context, id int64, result int) error {
-	updStmt := `UPDATE expressions 
-                   SET result = $1, 
-                       state = $2,
-                       eval_finished_at = $3
-                 WHERE id =$4;`
-	_, err := r.db.ExecContext(ctx, updStmt, result, domain.ExpressionStateOK, time.Now(), id)
-	if err != nil {
-		return err
-	}
-	return nil
+func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error) {
+	var e domain.Expression
+	selectStmt := `SELECT e.id
+	    				 ,e.value
+					     ,max(case
+							   when se.is_last then se.result
+					      end) as result
+					     ,e.state
+					     ,e.error_msg
+					     ,e.created_at
+					     ,min(se.eval_started_at) as eval_started_at
+					     ,max(se.eval_finished_at) as eval_finished_at
+			   	     FROM expressions e
+				     JOIN sub_expressions se ON se.expression_id = e.id
+				    WHERE exists(select 1
+					  			   from sub_expressions se2
+							      where se2.id = $1
+								    and se2.expression_id = se.id)
+				 group by e.id
+					     ,e.value
+					     ,e.result
+					     ,e.state
+					     ,e.error_msg
+					     ,e.created_at
+					     ,e.eval_started_at
+					     ,e.eval_finished_at;`
+	return e, r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.Value, &e.Result, &e.State, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt)
 }
 
 func (r *repository) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
@@ -274,6 +295,27 @@ func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, resu
                  WHERE id = $3
                    AND eval_finished_at is null;`
 	_, err := r.db.ExecContext(ctx, updStmt, result, time.Now(), seId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error) {
+	var isLast bool
+	selectStmt := `SELECT is_last
+                     FROM sub_expressions
+                    WHERE id = $1;`
+	return isLast, r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&isLast)
+}
+
+func (r *repository) DeleteSubExpressions(ctx context.Context, seId int64) error {
+	deleteStmt := `delete from sub_expressions se
+      where exists (select 1
+                      from sub_expressions p
+                     where p.expression_id = se.expression_id
+                       and p.id = $1);`
+	_, err := r.db.ExecContext(ctx, deleteStmt, seId)
 	if err != nil {
 		return err
 	}

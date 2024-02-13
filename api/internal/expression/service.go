@@ -131,14 +131,18 @@ func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent 
 }
 
 func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
-	if errMsg != "" {
-		fmt.Println("TO_DO change status of expression")
-		return nil
-	}
-
 	if result == nil {
 		return nil
 	}
+	if err := s.writerService.StopSubExpressionEval(ctx, seId, *result); err != nil {
+		return err
+	}
 
-	return s.writerService.StopSubExpressionEval(ctx, seId, *result)
+	e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+	if err != nil {
+		return err
+	}
+	fmt.Println(e)
+
+	return nil
 }

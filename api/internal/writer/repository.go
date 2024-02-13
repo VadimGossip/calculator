@@ -109,7 +109,6 @@ func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64)
 							   when se.is_last then se.result
 					      end) as result
 					     ,e.state
-					     ,e.error_msg
 					     ,e.created_at
 					     ,min(se.eval_started_at) as eval_started_at
 					     ,max(se.eval_finished_at) as eval_finished_at
@@ -118,7 +117,7 @@ func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64)
 				    WHERE exists(select 1
 					  			   from sub_expressions se2
 							      where se2.id = $1
-								    and se2.expression_id = se.id)
+								    and  se2.expression_id = se.expression_id)
 				 group by e.id
 					     ,e.value
 					     ,e.result

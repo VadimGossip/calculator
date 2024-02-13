@@ -2,7 +2,6 @@ package expression
 
 import (
 	"context"
-	"fmt"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
@@ -132,17 +131,26 @@ func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent 
 
 func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
 	if result == nil {
-		return nil
+		e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+		if err != nil {
+			return err
+		}
+		e.ErrorMsg = errMsg
+		return s.writerService.UpdateExpression(ctx, e)
 	}
 	if err := s.writerService.StopSubExpressionEval(ctx, seId, *result); err != nil {
 		return err
 	}
-
-	e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+	isLast, err := s.writerService.GetSubExpressionIsLast(ctx, seId)
 	if err != nil {
 		return err
 	}
-	fmt.Println(e)
-
+	if isLast {
+		e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+		if err != nil {
+			return err
+		}
+		return s.writerService.UpdateExpression(ctx, e)
+	}
 	return nil
 }

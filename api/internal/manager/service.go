@@ -3,11 +3,13 @@ package manager
 import (
 	"context"
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
 	"github.com/VadimGossip/calculator/api/internal/writer"
 )
 
 type service struct {
+	parseService  parser.Service
 	writerService writer.Service
 	producer      rabbitmq.Producer
 }
@@ -23,8 +25,8 @@ type Service interface {
 
 var _ Service = (*service)(nil)
 
-func NewService(writerService writer.Service, producer rabbitmq.Producer) *service {
-	return &service{writerService: writerService, producer: producer}
+func NewService(parseService parser.Service, writerService writer.Service, producer rabbitmq.Producer) *service {
+	return &service{parseService: parseService, writerService: writerService, producer: producer}
 }
 
 func (s *service) RegisterExpression(ctx context.Context, value string) (int64, error) {
@@ -33,18 +35,24 @@ func (s *service) RegisterExpression(ctx context.Context, value string) (int64, 
 	if err := s.writerService.CreateExpression(ctx, &expr); err != nil {
 		return 0, err
 	}
-	a := 2
-	b := 3
-	se := domain.SubExpression{
-		ExpressionsId: expr.Id,
-		Val1:          &a,
-		Val2:          &b,
-		OperationName: "-",
-		IsLast:        true,
-	}
 
-	if err := s.writerService.CreateSubExpression(ctx, &se); err != nil {
-		return 0, err
+	idDict := make(map[int64]int64)
+	for _, se := range s.parseService.ParseExpression(expr) {
+		enrichedSe := se
+		if se.SubExpressionId1 != nil {
+			if val, ok := idDict[*se.SubExpressionId1]; ok {
+				enrichedSe.SubExpressionId1 = &val
+			}
+		}
+		if se.SubExpressionId2 != nil {
+			if val, ok := idDict[*se.SubExpressionId2]; ok {
+				enrichedSe.SubExpressionId2 = &val
+			}
+		}
+		if err := s.writerService.CreateSubExpression(ctx, &enrichedSe); err != nil {
+			return 0, err
+		}
+		idDict[se.Id] = enrichedSe.Id
 	}
 
 	//if err := s.writerService.SaveExpressionResult(ctx, expr.Id, 6); err != nil {

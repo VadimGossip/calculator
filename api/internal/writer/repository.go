@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"github.com/VadimGossip/calculator/api/internal/domain"
-	"github.com/pkg/errors"
 	"time"
 )
 
@@ -241,13 +240,8 @@ func (r *repository) GetOperationDurations(ctx context.Context) ([]domain.Operat
 }
 
 func (r *repository) CreateSubExpression(ctx context.Context, s *domain.SubExpression) error {
-	createStmt := `INSERT 
-                     INTO sub_expressions(expression_id, val1, val2, sub_expression_id1, sub_expression_id2, operation_name, is_last) 
-                   VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id into $1;`
-	_, err := r.db.ExecContext(ctx, createStmt, s.ExpressionsId, valPointerToNullVal(s.Val1), valPointerToNullVal(s.Val2), valPointerToNullVal(s.SubExpressionId1), valPointerToNullVal(s.SubExpressionId2), s.OperationName, s.IsLast, s.Id)
-	if err != nil {
-		return errors.Wrap(err, "failed to create sub expression")
-	}
-	return nil
+	createStmt := "INSERT INTO sub_expressions(expression_id, val1, val2, sub_expression_id1, sub_expression_id2, operation_name, is_last)" +
+		"VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+
+	return r.db.QueryRowContext(ctx, createStmt, s.ExpressionsId, valPointerToNullVal(s.Val1), valPointerToNullVal(s.Val2), valPointerToNullVal(s.SubExpressionId1), valPointerToNullVal(s.SubExpressionId2), s.Operation, s.IsLast).Scan(&s.Id)
 }

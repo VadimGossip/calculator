@@ -30,13 +30,13 @@ create table operation_durations
 create table sub_expressions
 (
     id                 serial                  not null unique,
-    expressions_id     integer,
-    val1               integer,
-    val2               integer,
+    expression_id      integer,
+    val1               numeric(10, 5),
+    val2               numeric(10, 5),
     sub_expression_id1 integer,
     sub_expression_id2 integer,
     operation_name     varchar(255) not null,
-    result             integer,
+    result             numeric(10, 5),
     agent_id           integer,
     is_last            boolean default false
 );

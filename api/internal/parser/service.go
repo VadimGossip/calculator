@@ -120,13 +120,12 @@ func (s *service) ParseExpression(e domain.Expression) []domain.SubExpression {
 	seItems := st.getSubExpressions()
 	for idx, item := range seItems {
 		se := domain.SubExpression{
-			Id:            item.id,
-			ExpressionsId: 0,
-			Val1:          item.first,
-			Val2:          item.second,
-			Operation:     item.operation,
-			AgentId:       0,
-			IsLast:        idx == len(seItems),
+			Id:           item.id,
+			ExpressionId: e.Id,
+			Val1:         item.first,
+			Val2:         item.second,
+			Operation:    item.operation,
+			IsLast:       idx == len(seItems),
 		}
 		if item.prevSe1 != nil {
 			se.SubExpressionId1 = &item.prevSe1.id

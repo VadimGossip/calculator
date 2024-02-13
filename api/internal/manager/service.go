@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
@@ -54,6 +55,7 @@ func (s *service) RegisterExpression(ctx context.Context, value string) (int64, 
 		}
 		idDict[se.Id] = enrichedSe.Id
 	}
+	fmt.Println(idDict)
 
 	//if err := s.writerService.SaveExpressionResult(ctx, expr.Id, 6); err != nil {
 	//	return 0, err

@@ -21,6 +21,9 @@ type Repository interface {
 	UpdateOperationDuration(ctx context.Context, name string, duration uint16) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
+	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
+	StopSubExpressionEval(ctx context.Context, seId int64, result float64) error
+	GetReadySubExpressions(ctx context.Context) ([]domain.SubExpression, error)
 }
 
 type repository struct {
@@ -155,7 +158,7 @@ func (r *repository) CreateAgent(ctx context.Context, name string) error {
 func (r *repository) SetAgentHeartbeatAt(ctx context.Context, name string) error {
 	updStmt := `UPDATE agents 
                    SET last_heartbeat_at = $1
-                 WHERE name =$1;`
+                 WHERE name = $2;`
 	_, err := r.db.ExecContext(ctx, updStmt, time.Now(), name)
 	if err != nil {
 		return err
@@ -244,4 +247,74 @@ func (r *repository) CreateSubExpression(ctx context.Context, s *domain.SubExpre
 		"VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 
 	return r.db.QueryRowContext(ctx, createStmt, s.ExpressionId, valPointerToNullVal(s.Val1), valPointerToNullVal(s.Val2), valPointerToNullVal(s.SubExpressionId1), valPointerToNullVal(s.SubExpressionId2), s.Operation, s.IsLast).Scan(&s.Id)
+}
+
+func (r *repository) StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error) {
+	updStmt := `UPDATE sub_expressions 
+                   SET agent_name = $1
+                      ,eval_started_at = $2
+                 WHERE id = $3
+                   AND agent_name is null;`
+	result, err := r.db.ExecContext(ctx, updStmt, agent, time.Now(), seId)
+	if err != nil {
+		return false, err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows == 1, nil
+}
+
+func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, result float64) error {
+	updStmt := `UPDATE sub_expressions 
+                   SET result = $1
+                      ,eval_finished_at = $2
+                 WHERE id = $3;`
+	_, err := r.db.ExecContext(ctx, updStmt, result, time.Now(), seId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) GetReadySubExpressions(ctx context.Context) ([]domain.SubExpression, error) {
+	selectStmt := `select se.id
+                        ,coalesce(se.val1, se1.result) as val1
+              			,coalesce(se.val2, se2.result) as val2
+                        ,se.operation_name
+                    from sub_expressions se
+               left join sub_expressions se1 on se.sub_expression_id1 = se1.id
+               left join sub_expressions se2 on se.sub_expression_id2 = se2.id
+                   where se.eval_started_at is null
+                     and coalesce(se.val1, se1.result) is not null
+                     and coalesce(se.val2, se2.result) is not null;`
+
+	rows, err := r.db.QueryContext(ctx, selectStmt)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.SubExpression, 0)
+	for rows.Next() {
+		var se domain.SubExpression
+		if err = rows.Scan(&se.Id, &se.Val1, &se.Val2, &se.Operation); err != nil {
+			return nil, err
+		}
+		result = append(result, se)
+	}
+	return result, nil
+}
+
+func (r *repository) SkipAgentSubExpressions(ctx context.Context, agent string) error {
+	updStmt := `UPDATE sub_expressions 
+                   SET agent_name = null
+                 WHERE agent_name = $1
+                   and eval_started_at is not null
+                   and eval_finished_at is null;`
+	_, err := r.db.ExecContext(ctx, updStmt, agent)
+	if err != nil {
+		return err
+	}
+	return nil
 }

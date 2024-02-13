@@ -136,6 +136,7 @@ func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result 
 			return err
 		}
 		e.ErrorMsg = errMsg
+		e.State = domain.ExpressionStateError
 		return s.writerService.UpdateExpression(ctx, e)
 	}
 	if err := s.writerService.StopSubExpressionEval(ctx, seId, *result); err != nil {
@@ -150,6 +151,7 @@ func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result 
 		if err != nil {
 			return err
 		}
+		e.State = domain.ExpressionStateOK
 		return s.writerService.UpdateExpression(ctx, e)
 	}
 	return nil

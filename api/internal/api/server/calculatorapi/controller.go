@@ -78,6 +78,52 @@ func (ctrl *controller) AgentHeartbeat(c *gin.Context) {
 	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
 }
 
+func (ctrl *controller) StartSubExpressionEval(c *gin.Context) {
+	var req StartSubExpressionEvalRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		errMsg := fmt.Sprintf("Parse request error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "StartSubExpressionEval",
+		}).Error(errMsg)
+		c.JSON(http.StatusBadRequest, StartSubExpressionEvalResponse{Error: errMsg, Status: http.StatusBadRequest})
+		return
+	}
+
+	skip, err := ctrl.expressionService.StartSubExpressionEval(c.Request.Context(), req.Id, req.Agent)
+	if err != nil {
+		errMsg := fmt.Sprintf("start sub expression eval error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "StartSubExpressionEval",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, StartSubExpressionEvalResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	c.JSON(http.StatusOK, StartSubExpressionEvalResponse{Skip: skip, Status: http.StatusOK})
+}
+
+func (ctrl *controller) StopSubExpressionEval(c *gin.Context) {
+	var req StopSubExpressionEvalRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		errMsg := fmt.Sprintf("Parse request error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "StopSubExpressionEval",
+		}).Error(errMsg)
+		c.JSON(http.StatusBadRequest, CommonResponse{Error: errMsg, Status: http.StatusBadRequest})
+		return
+	}
+
+	if err := ctrl.expressionService.StopSubExpressionEval(c.Request.Context(), req.Id, req.Result, req.Error); err != nil {
+		errMsg := fmt.Sprintf("stop sub expression eval error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "StopSubExpressionEval",
+		}).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, CommonResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
+}
 func (ctrl *controller) GetAllAgents(c *gin.Context) {
 	agents, err := ctrl.expressionService.GetAgents(c.Request.Context())
 	if err != nil {

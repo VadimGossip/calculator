@@ -23,6 +23,8 @@ type Service interface {
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	SaveOperationDurations(ctx context.Context, data map[string]uint16) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
+	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
+	StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 }
 
 var _ Service = (*service)(nil)
@@ -47,7 +49,6 @@ func (s *service) prepareSubExpressionQueryData(ctx context.Context, expressionI
 		}
 		result = append(result, item)
 	}
-	fmt.Println(result)
 	return result, nil
 }
 
@@ -123,4 +124,21 @@ func (s *service) SaveOperationDurations(ctx context.Context, data map[string]ui
 
 func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {
 	return s.writerService.GetOperationDurations(ctx)
+}
+
+func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error) {
+	return s.writerService.StartSubExpressionEval(ctx, seId, agent)
+}
+
+func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
+	if errMsg != "" {
+		fmt.Println("TO_DO change status of expression")
+		return nil
+	}
+
+	if result == nil {
+		return nil
+	}
+
+	return s.writerService.StopSubExpressionEval(ctx, seId, *result)
 }

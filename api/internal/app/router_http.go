@@ -9,6 +9,8 @@ func initHttpRouter(app *App) {
 	s.GET("/expression", c.GetAllExpressions)
 	s.POST("/expression", c.CreateExpression)
 
+	s.POST("/sub_expression/start", c.StartSubExpressionEval)
+
 	s.GET("/agent", c.GetAllAgents)
 	s.POST("/agent", c.AgentHeartbeat)
 

@@ -30,3 +30,9 @@ type GetOperationDurationsResponse struct {
 	Error             string                     `json:"error,omitempty"`
 	Status            int                        `json:"status" example:"200"`
 }
+
+type StartSubExpressionEvalResponse struct {
+	Error  string `json:"error,omitempty"`
+	Status int    `json:"status" example:"200"`
+	Skip   bool   `json:"skip" example:"false"`
+}

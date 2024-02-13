@@ -14,6 +14,7 @@ type Expression struct {
 	Value          string     `json:"expression_value"`
 	Result         *int       `json:"result"`
 	State          string     `json:"status"`
+	EvalError      string     `json:"eval_error"`
 	CreatedAt      time.Time  `json:"created_at"`
 	EvalStartedAt  *time.Time `json:"eval_started_at"`
 	EvalFinishedAt *time.Time `json:"eval_finished_at"`

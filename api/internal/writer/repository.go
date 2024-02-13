@@ -264,14 +264,15 @@ func (r *repository) StartSubExpressionEval(ctx context.Context, seId int64, age
 		return false, err
 	}
 
-	return rows == 1, nil
+	return rows != 1, nil
 }
 
 func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, result float64) error {
 	updStmt := `UPDATE sub_expressions 
                    SET result = $1
                       ,eval_finished_at = $2
-                 WHERE id = $3;`
+                 WHERE id = $3
+                   AND eval_finished_at is null;`
 	_, err := r.db.ExecContext(ctx, updStmt, result, time.Now(), seId)
 	if err != nil {
 		return err

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/VadimGossip/calculator/agent/internal/domain"
+	"github.com/VadimGossip/calculator/agent/internal/worker"
+	"github.com/VadimGossip/calculator/agent/pkg/workerctrl"
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"time"
@@ -15,15 +17,15 @@ type Consumer interface {
 }
 
 type consumer struct {
-	cfg  domain.AMPQStructCfg
-	conn Connection
-	//	workerService fraudwriter.Service
+	cfg           domain.AMPQStructCfg
+	conn          Connection
+	workerService worker.Service
 }
 
 var _ Consumer = (*consumer)(nil)
 
-func NewConsumer(cfg domain.AMPQStructCfg, conn Connection) *consumer {
-	return &consumer{cfg: cfg, conn: conn}
+func NewConsumer(cfg domain.AMPQStructCfg, conn Connection, workerService worker.Service) *consumer {
+	return &consumer{cfg: cfg, conn: conn, workerService: workerService}
 }
 
 func (c *consumer) upExchanges() error {
@@ -134,7 +136,7 @@ func (c *consumer) subscribe(ctx context.Context) {
 		break
 	}
 	logrus.Info("RabbitMQ consumer connected")
-
+	workerCtrl := workerctrl.NewService(c.workerService.GetMaxProcessAllowed())
 	for {
 		select {
 		case <-ctx.Done():
@@ -152,6 +154,11 @@ func (c *consumer) subscribe(ctx context.Context) {
 				}()
 				return
 			}
+			workerCtrl.Acquire(1)
+			go func(v amqp.Delivery) {
+				defer workerCtrl.Release(1)
+				c.processDeliveryMsg(v)
+			}(v)
 			var id int64
 			if err = json.Unmarshal(v.Body, &id); err != nil {
 				fmt.Println(err)
@@ -159,6 +166,22 @@ func (c *consumer) subscribe(ctx context.Context) {
 
 			fmt.Println(id)
 		}
+	}
+}
+
+func (c *consumer) processDeliveryMsg(msg amqp.Delivery) {
+	var item domain.SubExpressionQueryItem
+	if err := json.Unmarshal(msg.Body, &item); err != nil {
+		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be thrown away", msg.Body, err)
+	}
+	if err := c.workerService.Do(item); err != nil {
+		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be moved to dlx", msg.Body, err)
+		if err = msg.Nack(false, false); err != nil {
+			logrus.Errorf("nack msg error %s", err)
+		}
+	}
+	if err := msg.Ack(false); err != nil {
+		logrus.Errorf("ack msg error %s", err)
 	}
 }
 

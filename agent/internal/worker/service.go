@@ -8,9 +8,12 @@ import (
 )
 
 type Service interface {
+	Do(item domain.SubExpressionQueryItem) error
+	GetMaxProcessAllowed() int
 }
 
 type service struct {
+	cfg              domain.AgentCfg
 	calculatorClient calculatorapi.ClientService
 }
 
@@ -49,7 +52,7 @@ func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
 func (s *service) Do(item domain.SubExpressionQueryItem) error {
 	startResp, err := s.calculatorClient.SendStartEvalRequest(&calculatorapi.StartSubExpressionEvalRequest{
 		Id:    item.Id,
-		Agent: "x",
+		Agent: s.cfg.Name,
 	})
 
 	if startResp.Skip == true {
@@ -71,4 +74,8 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 		return fmt.Errorf(stopResp.Error)
 	}
 	return nil
+}
+
+func (s *service) GetMaxProcessAllowed() int {
+	return s.cfg.MaxProcesses
 }

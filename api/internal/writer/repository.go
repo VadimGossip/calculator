@@ -3,6 +3,7 @@ package writer
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"time"
 )
@@ -22,7 +23,7 @@ type Repository interface {
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
-	StopSubExpressionEval(ctx context.Context, seId int64, result float64) error
+	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	DeleteSubExpressions(ctx context.Context, seId int64) error
 	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
@@ -297,13 +298,13 @@ func (r *repository) StartSubExpressionEval(ctx context.Context, seId int64, age
 	return rows != 1, nil
 }
 
-func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, result float64) error {
+func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error {
 	updStmt := `UPDATE sub_expressions 
                    SET result = $1
                       ,eval_finished_at = $2
                  WHERE id = $3
                    AND eval_finished_at is null;`
-	_, err := r.db.ExecContext(ctx, updStmt, result, time.Now(), seId)
+	_, err := r.db.ExecContext(ctx, updStmt, valPointerToNullVal(result), time.Now(), seId)
 	if err != nil {
 		return err
 	}
@@ -333,17 +334,20 @@ func (r *repository) DeleteSubExpressions(ctx context.Context, seId int64) error
 
 func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
 	selectStmt := `select se.id
-                        ,coalesce(se.val1, se1.result) as val1
-              			,coalesce(se.val2, se2.result) as val2
-                        ,se.operation_name
-                    from sub_expressions se
-               left join sub_expressions se1 on se.sub_expression_id1 = se1.id
-               left join sub_expressions se2 on se.sub_expression_id2 = se2.id
-                   where se.eval_started_at is null
-                     and se.expression_id = coalesce($1, se.expression_id) 
-                     and coalesce(se.val1, se1.result) is not null
-                     and coalesce(se.val2, se2.result) is not null;`
-
+			     		  ,coalesce(se.val1, se1.result) as val1
+				    	  ,coalesce(se.val2, se2.result) as val2
+						  ,se.operation_name
+     					  ,coalesce(d.duration, 0) as operation_duration
+						  ,se.eval_started_at						  
+					 from sub_expressions se
+				left join sub_expressions se1 on se.sub_expression_id1 = se1.id
+				left join sub_expressions se2 on se.sub_expression_id2 = se2.id
+				left join operation_durations d on d.operation_name = se.operation_name
+					where se.expression_id = coalesce($1, se.expression_id)
+					  and coalesce(se.val1, se1.result) is not null
+					  and coalesce(se.val2, se2.result) is not null
+					  and se.result is null
+                      and se.eval_finished_at is null;`
 	rows, err := r.db.QueryContext(ctx, selectStmt, valPointerToNullVal(expressionId))
 	if err != nil {
 		return nil, err
@@ -351,10 +355,17 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 	result := make([]domain.SubExpression, 0)
 	for rows.Next() {
 		var se domain.SubExpression
-		if err = rows.Scan(&se.Id, &se.Val1, &se.Val2, &se.Operation); err != nil {
+		var evalStartedAt sql.NullTime
+		if err = rows.Scan(&se.Id, &se.Val1, &se.Val2, &se.Operation, &se.OperationDuration, &evalStartedAt); err != nil {
 			return nil, err
 		}
-		result = append(result, se)
+		if evalStartedAt.Valid {
+			se.EvalStartedAt = evalStartedAt.Time
+		}
+		if se.EvalStartedAt.Equal(time.Time{}) || time.Since(se.EvalStartedAt) > 5 {
+			fmt.Println(se)
+			result = append(result, se)
+		}
 	}
 	return result, nil
 }

@@ -20,7 +20,7 @@ type Service interface {
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
-	StopSubExpressionEval(ctx context.Context, seId int64, result float64) error
+	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
 }
@@ -84,7 +84,7 @@ func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent 
 	return s.repo.StartSubExpressionEval(ctx, seId, agent)
 }
 
-func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result float64) error {
+func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error {
 	return s.repo.StopSubExpressionEval(ctx, seId, result)
 }
 

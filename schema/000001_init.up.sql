@@ -3,7 +3,7 @@ create table expressions
 (
     id               serial                  not null unique,
     value            varchar(255)            not null,
-    result           integer,
+    result           numeric(10, 5),
     state            varchar(255)            not null,
     error_msg        varchar(2000),
     created_at       timestamp default now() not null,

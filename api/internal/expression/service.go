@@ -129,22 +129,48 @@ func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent 
 	return s.writerService.StartSubExpressionEval(ctx, seId, agent)
 }
 
+//func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
+//	if result == nil {
+//		e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+//		if err != nil {
+//			return err
+//		}
+//		e.ErrorMsg = errMsg
+//		e.State = domain.ExpressionStateError
+//		return s.writerService.UpdateExpression(ctx, e)
+//	}
+//	if err := s.writerService.StopSubExpressionEval(ctx, seId, *result); err != nil {
+//		return err
+//	}
+//	e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+//	if err != nil {
+//		return err
+//	}
+//
+//	isLast, err := s.writerService.GetSubExpressionIsLast(ctx, seId)
+//	if err != nil {
+//		return err
+//	}
+//	if isLast {
+//		e.State = domain.ExpressionStateOK
+//		return s.writerService.UpdateExpression(ctx, e)
+//	}
+//	return s.prepareAndPublish(ctx, &e.Id)
+//}
+
 func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
-	if result == nil {
-		e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
-		if err != nil {
-			return err
-		}
-		e.ErrorMsg = errMsg
-		e.State = domain.ExpressionStateError
-		return s.writerService.UpdateExpression(ctx, e)
-	}
-	if err := s.writerService.StopSubExpressionEval(ctx, seId, *result); err != nil {
+	if err := s.writerService.StopSubExpressionEval(ctx, seId, result); err != nil {
 		return err
 	}
 	e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
 	if err != nil {
 		return err
+	}
+
+	if result == nil {
+		e.ErrorMsg = errMsg
+		e.State = domain.ExpressionStateError
+		return s.writerService.UpdateExpression(ctx, e)
 	}
 
 	isLast, err := s.writerService.GetSubExpressionIsLast(ctx, seId)

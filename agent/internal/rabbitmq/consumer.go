@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/VadimGossip/calculator/agent/internal/domain"
 	"github.com/VadimGossip/calculator/agent/internal/worker"
 	"github.com/VadimGossip/calculator/agent/pkg/workerctrl"
@@ -159,12 +158,6 @@ func (c *consumer) subscribe(ctx context.Context) {
 				defer workerCtrl.Release(1)
 				c.processDeliveryMsg(v)
 			}(v)
-			var id int64
-			if err = json.Unmarshal(v.Body, &id); err != nil {
-				fmt.Println(err)
-			}
-
-			fmt.Println(id)
 		}
 	}
 }

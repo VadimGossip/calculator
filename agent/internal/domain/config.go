@@ -41,7 +41,7 @@ type AMPQStructCfg struct {
 
 type AgentCfg struct {
 	Name         string
-	MaxProcesses int
+	MaxProcesses int `envconfig:"MAX_PROCESSES"`
 }
 
 type Config struct {

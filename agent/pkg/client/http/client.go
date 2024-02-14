@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
 type Client interface {
 	SendGetRequest(endpoint string, request, response interface{}) error
 	SendPostRequest(endpoint string, request, response interface{}) error
+	SendPostRequestUrlParams(endpoint string, params map[string]string, response interface{}) error
 }
 
 type client struct {
@@ -43,6 +45,41 @@ func (c *client) SendGetRequest(endpoint string, request, response interface{}) 
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if c.apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
+	req.Close = true
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, response)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) SendPostRequestUrlParams(endpoint string, params map[string]string, response interface{}) error {
+	data := url.Values{}
+	for key, value := range params {
+		data.Set(key, value)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, c.baseURL+endpoint, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if c.apiKey != "" {
 		req.Header.Set("Authorization", "Bearer "+c.apiKey)
 	}

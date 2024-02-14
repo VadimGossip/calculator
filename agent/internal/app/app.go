@@ -48,6 +48,7 @@ func (app *App) Run() {
 	}
 
 	app.rabbitConsumer.Subscribe(ctx)
+	go app.workerService.RunHeartbeat(ctx)
 
 	logrus.Infof("[%s] started", app.name)
 	c := make(chan os.Signal, 1)

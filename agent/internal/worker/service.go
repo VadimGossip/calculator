@@ -1,15 +1,18 @@
 package worker
 
 import (
+	"context"
 	"fmt"
 	"github.com/VadimGossip/calculator/agent/internal/api/client/calculatorapi"
 	"github.com/VadimGossip/calculator/agent/internal/domain"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
 type Service interface {
 	Do(item domain.SubExpressionQueryItem) error
 	GetMaxProcessAllowed() int
+	RunHeartbeat(ctx context.Context)
 }
 
 type service struct {
@@ -79,4 +82,25 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 
 func (s *service) GetMaxProcessAllowed() int {
 	return s.cfg.MaxProcesses
+}
+
+func (s *service) RunHeartbeat(ctx context.Context) {
+	logrus.Info("Heartbeat started")
+	defer logrus.Info("Heartbeat stopped")
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			hbResp, err := s.calculatorApiClient.SendHeartRequest(s.cfg.Name)
+			if err != nil {
+				logrus.Infof("Hearbeat send error %s", err)
+			}
+			if hbResp.Error != "" {
+				logrus.Infof("Hearbeat error response %v", hbResp)
+			}
+		}
+	}
 }

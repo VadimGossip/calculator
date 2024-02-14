@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/VadimGossip/calculator/agent/internal/domain"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -29,6 +30,13 @@ func unmarshal(cfg *domain.Config) error {
 	return nil
 }
 
+func setFromEnv(cfg *domain.Config) error {
+	if err := envconfig.Process("agent", &cfg.Agent); err != nil {
+		return err
+	}
+	return nil
+}
+
 func Init(configDir string) (*domain.Config, error) {
 	viper.SetConfigName("config")
 	if err := parseConfigFile(configDir); err != nil {
@@ -37,6 +45,9 @@ func Init(configDir string) (*domain.Config, error) {
 
 	var cfg domain.Config
 	if err := unmarshal(&cfg); err != nil {
+		return nil, err
+	}
+	if err := setFromEnv(&cfg); err != nil {
 		return nil, err
 	}
 	logrus.Infof("Config: %+v", cfg)

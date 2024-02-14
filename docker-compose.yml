@@ -42,6 +42,9 @@ services:
     build:
       context: .
       dockerfile: dockerfile-calculator-agent
+    environment:
+      - AGENT_NAME=AGENT_1
+      - AGENT_MAX_PROCESSES=5
     restart: always
     networks:
       - calculator-network
@@ -52,6 +55,9 @@ services:
     build:
       context: .
       dockerfile: dockerfile-calculator-agent
+    environment:
+      - AGENT_NAME=AGENT_2
+      - AGENT_MAX_PROCESSES=3
     restart: always
     networks:
       - calculator-network

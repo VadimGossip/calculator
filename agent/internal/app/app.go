@@ -41,11 +41,7 @@ func (app *App) Run() {
 	}
 	app.cfg = cfg
 
-	dbAdapter := NewDBAdapter()
-	if err := dbAdapter.Connect(); err != nil {
-		logrus.Fatalf("Fail to connect db %s", err)
-	}
-	app.Factory = newFactory(app.cfg, dbAdapter)
+	app.Factory = newFactory(app.cfg)
 
 	if err := app.rabbitService.Run(ctx); err != nil {
 		logrus.Fatalf("Fail to run RabbitMQ service %s", err)
@@ -69,10 +65,6 @@ func (app *App) Run() {
 	cancel()
 	if err := app.rabbitService.Shutdown(); err != nil {
 		logrus.Fatalf("Fail to shutdown RabbitMQ service %s", err)
-	}
-
-	if err := dbAdapter.Close(); err != nil {
-		logrus.Fatalf("Fail to close db %s", err)
 	}
 
 	logrus.Infof("[%s] stopped", app.name)

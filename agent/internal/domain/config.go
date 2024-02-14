@@ -39,7 +39,13 @@ type AMPQStructCfg struct {
 	ConsumerCfg   ConsumerCfg `mapstructure:"consumer"`
 }
 
+type AgentCfg struct {
+	Name         string
+	MaxProcesses int
+}
+
 type Config struct {
+	Agent            AgentCfg
 	AppHttpServer    NetServerConfig
 	AMPQServerConfig AMPQServerConfig
 	AMPQStructCfg    AMPQStructCfg

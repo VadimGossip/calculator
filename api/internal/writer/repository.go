@@ -13,7 +13,7 @@ type Repository interface {
 	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	GetAgent(ctx context.Context, key string) (domain.Agent, error)
-	ModifyAgent(ctx context.Context, name string) error
+	CreateAgent(ctx context.Context, name string) error
 	SetAgentHeartbeatAt(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	GetOperationDuration(ctx context.Context, name string) (domain.OperationDuration, error)
@@ -163,13 +163,12 @@ func (r *repository) GetAgent(ctx context.Context, key string) (domain.Agent, er
 	return a, r.db.QueryRowContext(ctx, selectStmt, key).Scan(&a.Name, &a.CreatedAt, &a.LastHeartbeatAt)
 }
 
-func (r *repository) ModifyAgent(ctx context.Context, name string) error {
-	createStmt := "INSERT INTO agents as d (name, created_at, last_heartbeat_at) VALUES ($1, $2, $3)" +
-		"ON CONFLICT (name) DO UPDATE" +
-		"SET last_heartbeat_at = $4" +
-		"WHERE d.name = $1"
+func (r *repository) CreateAgent(ctx context.Context, name string) error {
+	createStmt := `INSERT 
+                     INTO agents(name, created_at, last_heartbeat_at)
+		           VALUES ($1, $2, $3);`
 
-	_, err := r.db.ExecContext(ctx, createStmt, name, time.Now(), time.Now(), time.Now(), name)
+	_, err := r.db.ExecContext(ctx, createStmt, name, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}

@@ -14,11 +14,11 @@ type Repository interface {
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	GetAgent(ctx context.Context, key string) (domain.Agent, error)
 	CreateAgent(ctx context.Context, name string) error
-	SetAgentHeartbeatAt(ctx context.Context, name string) error
+	SetAgentHeartbeatAt(ctx context.Context, name string) (bool, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	GetOperationDuration(ctx context.Context, name string) (domain.OperationDuration, error)
 	CreateOperationDuration(ctx context.Context, name string, duration uint16) error
-	UpdateOperationDuration(ctx context.Context, name string, duration uint16) error
+	UpdateOperationDuration(ctx context.Context, name string, duration uint16) (bool, error)
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
@@ -175,15 +175,20 @@ func (r *repository) CreateAgent(ctx context.Context, name string) error {
 	return nil
 }
 
-func (r *repository) SetAgentHeartbeatAt(ctx context.Context, name string) error {
+func (r *repository) SetAgentHeartbeatAt(ctx context.Context, name string) (bool, error) {
 	updStmt := `UPDATE agents 
                    SET last_heartbeat_at = $1
                  WHERE name = $2;`
-	_, err := r.db.ExecContext(ctx, updStmt, time.Now(), name)
+	result, err := r.db.ExecContext(ctx, updStmt, time.Now(), name)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows == 1, nil
 }
 
 func (r *repository) GetAgents(ctx context.Context) ([]domain.Agent, error) {
@@ -229,16 +234,21 @@ func (r *repository) CreateOperationDuration(ctx context.Context, name string, d
 	return nil
 }
 
-func (r *repository) UpdateOperationDuration(ctx context.Context, name string, duration uint16) error {
+func (r *repository) UpdateOperationDuration(ctx context.Context, name string, duration uint16) (bool, error) {
 	updStmt := `UPDATE operation_durations 
                    SET duration = $1
                       ,updated_at = $2
                  WHERE operation_name = $3;`
-	_, err := r.db.ExecContext(ctx, updStmt, time.Now(), duration, time.Now(), name)
+	result, err := r.db.ExecContext(ctx, updStmt, time.Now(), duration, time.Now(), name)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return rows == 1, nil
 }
 
 func (r *repository) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {

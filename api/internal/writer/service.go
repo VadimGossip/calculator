@@ -47,17 +47,14 @@ func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, erro
 }
 
 func (s *service) SaveAgentHeartbeat(ctx context.Context, name string) error {
-	//s.repo.ModifyAgent(ctx, name)
-	//
-	//
-	//gent, err := s.repo.GetAgent(ctx, name)
-	//if err != nil {
-	//	return err
-	//}
-	//if agent.Name == "" {
-	//	return s.repo.CreateAgent(ctx, name)
-	//}
-	return s.repo.ModifyAgent(ctx, name)
+	success, err := s.repo.SetAgentHeartbeatAt(ctx, name)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return s.repo.CreateAgent(ctx, name)
+	}
+	return nil
 }
 
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
@@ -65,14 +62,14 @@ func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 }
 
 func (s *service) SaveOperationDuration(ctx context.Context, name string, duration uint16) error {
-	operationDuration, err := s.repo.GetOperationDuration(ctx, name)
+	success, err := s.repo.UpdateOperationDuration(ctx, name, duration)
 	if err != nil {
 		return err
 	}
-	if operationDuration.Name == "" {
+	if !success {
 		return s.repo.CreateOperationDuration(ctx, name, duration)
 	}
-	return s.repo.UpdateOperationDuration(ctx, name, duration)
+	return nil
 }
 
 func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {

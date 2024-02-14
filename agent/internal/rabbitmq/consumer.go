@@ -167,6 +167,7 @@ func (c *consumer) processDeliveryMsg(msg amqp.Delivery) {
 	if err := json.Unmarshal(msg.Body, &item); err != nil {
 		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be thrown away", msg.Body, err)
 	}
+	logrus.Infof("message received %v", item)
 	if err := c.workerService.Do(item); err != nil {
 		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be moved to dlx", msg.Body, err)
 		if err = msg.Nack(false, false); err != nil {

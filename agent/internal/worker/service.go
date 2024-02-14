@@ -63,11 +63,15 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 	if err != nil {
 		return err
 	}
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
+	}
 
 	stopResp, err := s.calculatorApiClient.SendStopEvalRequest(&calculatorapi.StopSubExpressionEvalRequest{
 		Id:     item.Id,
 		Result: result,
-		Error:  err.Error(),
+		Error:  errMsg,
 	})
 
 	if stopResp.Error != "" {

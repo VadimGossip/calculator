@@ -13,14 +13,14 @@ type Service interface {
 }
 
 type service struct {
-	cfg              domain.AgentCfg
-	calculatorClient calculatorapi.ClientService
+	cfg                 domain.AgentCfg
+	calculatorApiClient calculatorapi.ClientService
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(calculatorClient calculatorapi.ClientService) *service {
-	return &service{calculatorClient: calculatorClient}
+func NewService(cfg domain.AgentCfg, calculatorClient calculatorapi.ClientService) *service {
+	return &service{cfg: cfg, calculatorApiClient: calculatorClient}
 }
 
 func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
@@ -50,7 +50,7 @@ func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
 }
 
 func (s *service) Do(item domain.SubExpressionQueryItem) error {
-	startResp, err := s.calculatorClient.SendStartEvalRequest(&calculatorapi.StartSubExpressionEvalRequest{
+	startResp, err := s.calculatorApiClient.SendStartEvalRequest(&calculatorapi.StartSubExpressionEvalRequest{
 		Id:    item.Id,
 		Agent: s.cfg.Name,
 	})
@@ -64,7 +64,7 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 		return err
 	}
 
-	stopResp, err := s.calculatorClient.SendStopEvalRequest(&calculatorapi.StopSubExpressionEvalRequest{
+	stopResp, err := s.calculatorApiClient.SendStopEvalRequest(&calculatorapi.StopSubExpressionEvalRequest{
 		Id:     item.Id,
 		Result: result,
 		Error:  err.Error(),

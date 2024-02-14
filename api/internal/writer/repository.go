@@ -239,7 +239,7 @@ func (r *repository) UpdateOperationDuration(ctx context.Context, name string, d
                    SET duration = $1
                       ,updated_at = $2
                  WHERE operation_name = $3;`
-	result, err := r.db.ExecContext(ctx, updStmt, time.Now(), duration, time.Now(), name)
+	result, err := r.db.ExecContext(ctx, updStmt, duration, time.Now(), name)
 	if err != nil {
 		return false, err
 	}

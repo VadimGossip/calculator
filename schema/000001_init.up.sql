@@ -21,7 +21,7 @@ create table agents
 create table operation_durations
 (
     operation_name   varchar(255)  not null unique,
-    duration         numeric(3) not null,
+    duration         numeric(7) not null,
     created_at       timestamp default now() not null,
     updated_at       timestamp default now() not null
 );

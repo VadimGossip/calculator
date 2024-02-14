@@ -47,14 +47,17 @@ func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, erro
 }
 
 func (s *service) SaveAgentHeartbeat(ctx context.Context, name string) error {
-	agent, err := s.repo.GetAgent(ctx, name)
-	if err != nil {
-		return err
-	}
-	if agent.Name == "" {
-		return s.repo.CreateAgent(ctx, name)
-	}
-	return s.repo.SetAgentHeartbeatAt(ctx, name)
+	//s.repo.ModifyAgent(ctx, name)
+	//
+	//
+	//gent, err := s.repo.GetAgent(ctx, name)
+	//if err != nil {
+	//	return err
+	//}
+	//if agent.Name == "" {
+	//	return s.repo.CreateAgent(ctx, name)
+	//}
+	return s.repo.ModifyAgent(ctx, name)
 }
 
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {

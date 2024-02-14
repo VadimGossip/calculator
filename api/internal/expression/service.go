@@ -142,17 +142,18 @@ func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result 
 	if err := s.writerService.StopSubExpressionEval(ctx, seId, *result); err != nil {
 		return err
 	}
+	e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
+	if err != nil {
+		return err
+	}
+
 	isLast, err := s.writerService.GetSubExpressionIsLast(ctx, seId)
 	if err != nil {
 		return err
 	}
 	if isLast {
-		e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
-		if err != nil {
-			return err
-		}
 		e.State = domain.ExpressionStateOK
 		return s.writerService.UpdateExpression(ctx, e)
 	}
-	return nil
+	return s.prepareAndPublish(ctx, &e.Id)
 }

@@ -60,9 +60,6 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 	}
 
 	result, err := s.eval(item)
-	if err != nil {
-		return err
-	}
 	var errMsg string
 	if err != nil {
 		errMsg = err.Error()

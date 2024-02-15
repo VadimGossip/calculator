@@ -5,7 +5,7 @@ import "github.com/VadimGossip/calculator/api/internal/api/server/calculatorapi"
 func initHttpRouter(app *App) {
 	s := app.apiHttpServer
 
-	c := calculatorapi.NewController(app.managerService)
+	c := calculatorapi.NewController(app.expressionService)
 	s.GET("/expression", c.GetAllExpressions)
 	s.POST("/expression", c.CreateExpression)
 

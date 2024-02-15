@@ -191,7 +191,7 @@ func (s *service) checkAgents(ctx context.Context) error {
 	for _, agent := range agents {
 		tp := time.Since(agent.LastHeartbeatAt)
 		if tp > time.Duration(s.cfg.AgentDownTimeout)*time.Minute {
-			logrus.Infof("Agent %s Last HeartBeatAt %s TimePassed %s Allowed %s. All Agent Task will be skipped.", agent.Name, agent.LastHeartbeatAt, tp, 5*time.Minute)
+			logrus.Infof("Agent %s Last HeartBeatAt %s TimePassed %s Allowed %s. All Agent Task will be skipped.", agent.Name, agent.LastHeartbeatAt, tp, time.Duration(s.cfg.AgentDownTimeout)*time.Minute)
 			return s.writerService.SkipAgentSubExpressions(ctx, agent.Name)
 		}
 	}

@@ -39,7 +39,26 @@ type AMPQStructCfg struct {
 	ConsumerCfg   ConsumerCfg `mapstructure:"consumer"`
 }
 
+type DbCfg struct {
+	Host     string
+	Port     int
+	Username string
+	Name     string
+	SSLMode  string
+	Password string
+}
+
+type ExpressionCfg struct {
+	MaxLength            int
+	HungTimeout          int
+	AgentDownTimeout     int
+	HungCheckPeriod      int
+	AgentDownCheckPeriod int
+}
+
 type Config struct {
+	Db               DbCfg
+	Expression       ExpressionCfg
 	AppHttpServer    NetServerConfig
 	AMPQServerConfig AMPQServerConfig
 	AMPQStructCfg    AMPQStructCfg

@@ -132,6 +132,7 @@ func (ctrl *controller) StopSubExpressionEval(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
 }
+
 func (ctrl *controller) GetAllAgents(c *gin.Context) {
 	agents, err := ctrl.expressionService.GetAgents(c.Request.Context())
 	if err != nil {

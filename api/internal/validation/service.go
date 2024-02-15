@@ -35,6 +35,10 @@ func (s *service) hasOperationSign(input string) bool {
 
 func (s *service) ValidateAndSimplify(value string) (string, error) {
 	simplified := strings.ReplaceAll(value, " ", "")
+	if len(simplified) > 50 {
+		return value, fmt.Errorf("invalid expression value. max length must be less than %d", 50)
+	}
+
 	if !s.isValid(simplified) {
 		return value, fmt.Errorf("invalid expression value format only +-/* operators and numbers allowed")
 	}

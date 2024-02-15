@@ -36,7 +36,7 @@ func (s *service) hasOperationSign(input string) bool {
 func (s *service) ValidateAndSimplify(value string) (string, error) {
 	simplified := strings.ReplaceAll(value, " ", "")
 	if !s.isValid(simplified) {
-		return value, fmt.Errorf("invalid expression value format only +-/* an numbers allowed")
+		return value, fmt.Errorf("invalid expression value format only +-/* operators and numbers allowed")
 	}
 	return simplified, nil
 }

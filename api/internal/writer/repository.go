@@ -3,7 +3,6 @@ package writer
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"time"
 )
@@ -286,9 +285,8 @@ func (r *repository) StartSubExpressionEval(ctx context.Context, seId int64, age
                    SET agent_name = $1
                       ,eval_started_at = $2
                  WHERE id = $3
-                   AND agent_name is null
-                    OR agent_name = $3;`
-	result, err := r.db.ExecContext(ctx, updStmt, agent, time.Now(), seId, agent)
+                   AND agent_name is null`
+	result, err := r.db.ExecContext(ctx, updStmt, agent, time.Now(), seId)
 	if err != nil {
 		return false, err
 	}
@@ -334,6 +332,19 @@ func (r *repository) DeleteSubExpressions(ctx context.Context, seId int64) error
 	return nil
 }
 
+func (r *repository) SkipStartSubExpressionEval(ctx context.Context, seId int64) error {
+	updStmt := `UPDATE sub_expressions 
+                   SET agent_name = null
+                      ,eval_started_at = null
+                 WHERE id = $1
+                   AND eval_finished_at is null;`
+	_, err := r.db.ExecContext(ctx, updStmt, seId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
 	selectStmt := `select se.id
 			     		  ,coalesce(se.val1, se1.result) as val1
@@ -364,8 +375,14 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 		if evalStartedAt.Valid {
 			se.EvalStartedAt = evalStartedAt.Time
 		}
-		if se.EvalStartedAt.Equal(time.Time{}) || time.Since(se.EvalStartedAt) > 5*time.Minute {
-			fmt.Println(se)
+		isHung := time.Since(se.EvalStartedAt) > 1*time.Minute
+		if isHung {
+			if err = r.SkipStartSubExpressionEval(ctx, se.Id); err != nil {
+				return nil, err
+			}
+		}
+
+		if se.EvalStartedAt.Equal(time.Time{}) || isHung {
 			result = append(result, se)
 		}
 	}

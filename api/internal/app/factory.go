@@ -33,7 +33,7 @@ func newFactory(cfg *domain.Config, dbAdapter *DBAdapter) *Factory {
 
 	factory.writerService = writer.NewService(dbAdapter.writerRepo)
 	factory.parseService = parser.NewService()
-	factory.validationService = validation.NewService()
-	factory.expressionService = expression.NewService(factory.parseService, factory.validationService, factory.writerService, factory.rabbitProducer)
+	factory.validationService = validation.NewService(cfg.Expression.MaxLength)
+	factory.expressionService = expression.NewService(cfg.Expression, factory.parseService, factory.validationService, factory.writerService, factory.rabbitProducer)
 	return factory
 }

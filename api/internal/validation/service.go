@@ -7,6 +7,7 @@ import (
 )
 
 type service struct {
+	maxLengthAllowed int
 }
 
 type Service interface {
@@ -15,8 +16,8 @@ type Service interface {
 
 var _ Service = (*service)(nil)
 
-func NewService() *service {
-	return &service{}
+func NewService(maxLengthAllowed int) *service {
+	return &service{maxLengthAllowed: maxLengthAllowed}
 }
 
 func (s *service) isValid(expr string) bool {

@@ -21,6 +21,9 @@ func unmarshal(cfg *domain.Config) error {
 	if err := viper.UnmarshalKey("app_http", &cfg.AppHttpServer); err != nil {
 		return err
 	}
+	if err := viper.UnmarshalKey("agent", &cfg.Agent); err != nil {
+		return err
+	}
 	if err := viper.UnmarshalKey("ampq_queue_struct", &cfg.AMPQStructCfg); err != nil {
 		return err
 	}

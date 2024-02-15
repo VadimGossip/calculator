@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -16,7 +17,17 @@ func parseConfigFile(configDir string) error {
 	return nil
 }
 
+func setFromEnv(cfg *domain.Config) error {
+	if err := envconfig.Process("db", &cfg.Db); err != nil {
+		return err
+	}
+	return nil
+}
+
 func unmarshal(cfg *domain.Config) error {
+	if err := viper.UnmarshalKey("expression", &cfg.Expression); err != nil {
+		return err
+	}
 	if err := viper.UnmarshalKey("app_http", &cfg.AppHttpServer); err != nil {
 		return err
 	}
@@ -36,6 +47,9 @@ func Init(configDir string) (*domain.Config, error) {
 	}
 
 	var cfg domain.Config
+	if err := setFromEnv(&cfg); err != nil {
+		return nil, err
+	}
 	if err := unmarshal(&cfg); err != nil {
 		return nil, err
 	}

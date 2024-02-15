@@ -12,6 +12,7 @@ import (
 )
 
 type service struct {
+	cfg               domain.ExpressionCfg
 	parseService      parser.Service
 	validationService validation.Service
 	writerService     writer.Service
@@ -33,12 +34,12 @@ type Service interface {
 
 var _ Service = (*service)(nil)
 
-func NewService(parseService parser.Service, validationService validation.Service, writerService writer.Service, producer rabbitmq.Producer) *service {
-	return &service{parseService: parseService, validationService: validationService, writerService: writerService, producer: producer}
+func NewService(cfg domain.ExpressionCfg, parseService parser.Service, validationService validation.Service, writerService writer.Service, producer rabbitmq.Producer) *service {
+	return &service{cfg: cfg, parseService: parseService, validationService: validationService, writerService: writerService, producer: producer}
 }
 
 func (s *service) prepareSubExpressionQueryData(ctx context.Context, expressionId *int64) ([]domain.SubExpressionQueryItem, error) {
-	seReady, err := s.writerService.GetReadySubExpressions(ctx, expressionId)
+	seReady, err := s.writerService.GetReadySubExpressions(ctx, expressionId, time.Duration(s.cfg.HungTimeout)*time.Minute)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +168,7 @@ func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result 
 func (s *service) runHungProcessWatcher(ctx context.Context) {
 	logrus.Info("HungProcessWatcher started")
 	defer logrus.Info("HungProcessWatcher stopped")
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(time.Duration(s.cfg.HungCheckPeriod) * time.Minute)
 	defer ticker.Stop()
 	for {
 		select {
@@ -189,7 +190,7 @@ func (s *service) checkAgents(ctx context.Context) error {
 	}
 	for _, agent := range agents {
 		tp := time.Since(agent.LastHeartbeatAt)
-		if tp > 5*time.Minute {
+		if tp > time.Duration(s.cfg.AgentDownTimeout)*time.Minute {
 			logrus.Infof("Agent %s Last HeartBeatAt %s TimePassed %s Allowed %s. All Agent Task will be skipped.", agent.Name, agent.LastHeartbeatAt, tp, 5*time.Minute)
 			return s.writerService.SkipAgentSubExpressions(ctx, agent.Name)
 		}
@@ -200,7 +201,7 @@ func (s *service) checkAgents(ctx context.Context) error {
 func (s *service) runAgentsWatcher(ctx context.Context) {
 	logrus.Info("AgentsWatcher started")
 	defer logrus.Info("AgentsWatcher stopped")
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(time.Duration(s.cfg.AgentDownCheckPeriod) * time.Minute)
 	defer ticker.Stop()
 	for {
 		select {

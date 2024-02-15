@@ -1,3 +1,5 @@
+agent:
+  heartbeatTimeout: 1 #sec how often agent will send heartbeat
 ampq_queue_server:
   url: "amqp://guest:guest@message-broker:5672/"
 ampq_queue_struct:

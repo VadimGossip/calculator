@@ -87,7 +87,7 @@ func (s *service) GetMaxProcessAllowed() int {
 func (s *service) RunHeartbeat(ctx context.Context) {
 	logrus.Info("Heartbeat started")
 	defer logrus.Info("Heartbeat stopped")
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(time.Duration(s.cfg.HeartbeatTimeout) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {

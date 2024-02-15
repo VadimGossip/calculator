@@ -3,6 +3,7 @@ package writer
 import (
 	"context"
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	"time"
 )
 
 type service struct {
@@ -22,7 +23,7 @@ type Service interface {
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
-	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
+	GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 
@@ -93,8 +94,8 @@ func (s *service) GetSubExpressionIsLast(ctx context.Context, seId int64) (bool,
 	return s.repo.GetSubExpressionIsLast(ctx, seId)
 }
 
-func (s *service) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
-	return s.repo.GetReadySubExpressions(ctx, expressionId)
+func (s *service) GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error) {
+	return s.repo.GetReadySubExpressions(ctx, expressionId, skipTimeout)
 }
 
 func (s *service) SkipAgentSubExpressions(ctx context.Context, agent string) error {

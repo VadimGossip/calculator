@@ -25,7 +25,7 @@ type Repository interface {
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	DeleteSubExpressions(ctx context.Context, seId int64) error
-	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
+	GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 
@@ -345,7 +345,7 @@ func (r *repository) SkipStartSubExpressionEval(ctx context.Context, seId int64)
 	return nil
 }
 
-func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
+func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error) {
 	selectStmt := `select se.id
 			     		  ,coalesce(se.val1, se1.result) as val1
 				    	  ,coalesce(se.val2, se2.result) as val2
@@ -375,7 +375,7 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 		if evalStartedAt.Valid {
 			se.EvalStartedAt = evalStartedAt.Time
 		}
-		isHung := time.Since(se.EvalStartedAt) > 1*time.Minute
+		isHung := time.Since(se.EvalStartedAt) > skipTimeout
 		if isHung {
 			if err = r.SkipStartSubExpressionEval(ctx, se.Id); err != nil {
 				return nil, err

@@ -286,8 +286,9 @@ func (r *repository) StartSubExpressionEval(ctx context.Context, seId int64, age
                    SET agent_name = $1
                       ,eval_started_at = $2
                  WHERE id = $3
-                   AND agent_name is null;`
-	result, err := r.db.ExecContext(ctx, updStmt, agent, time.Now(), seId)
+                   AND agent_name is null
+                    OR agent_name = $3;`
+	result, err := r.db.ExecContext(ctx, updStmt, agent, time.Now(), seId, agent)
 	if err != nil {
 		return false, err
 	}

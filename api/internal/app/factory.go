@@ -20,7 +20,7 @@ type Factory struct {
 
 	parseService      parser.Service
 	validationService validation.Service
-	managerService    expression.Service
+	expressionService expression.Service
 }
 
 var factory *Factory
@@ -34,6 +34,6 @@ func newFactory(cfg *domain.Config, dbAdapter *DBAdapter) *Factory {
 	factory.writerService = writer.NewService(dbAdapter.writerRepo)
 	factory.parseService = parser.NewService()
 	factory.validationService = validation.NewService()
-	factory.managerService = expression.NewService(factory.parseService, factory.validationService, factory.writerService, factory.rabbitProducer)
+	factory.expressionService = expression.NewService(factory.parseService, factory.validationService, factory.writerService, factory.rabbitProducer)
 	return factory
 }

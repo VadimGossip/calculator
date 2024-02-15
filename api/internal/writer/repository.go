@@ -27,6 +27,7 @@ type Repository interface {
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	DeleteSubExpressions(ctx context.Context, seId int64) error
 	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
+	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 
 type repository struct {
@@ -362,7 +363,7 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 		if evalStartedAt.Valid {
 			se.EvalStartedAt = evalStartedAt.Time
 		}
-		if se.EvalStartedAt.Equal(time.Time{}) || time.Since(se.EvalStartedAt) > 5 {
+		if se.EvalStartedAt.Equal(time.Time{}) || time.Since(se.EvalStartedAt) > 5*time.Minute {
 			fmt.Println(se)
 			result = append(result, se)
 		}
@@ -373,6 +374,7 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 func (r *repository) SkipAgentSubExpressions(ctx context.Context, agent string) error {
 	updStmt := `UPDATE sub_expressions 
                    SET agent_name = null
+                      ,eval_started_at = null
                  WHERE agent_name = $1
                    and eval_started_at is not null
                    and eval_finished_at is null;`

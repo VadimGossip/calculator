@@ -52,6 +52,8 @@ func (app *App) Run() {
 		logrus.Fatalf("Fail to run RabbitMQ service %s", err)
 	}
 
+	app.expressionService.RunProcessWatchers(ctx)
+
 	go func() {
 		app.apiHttpServer = NewHttpServer(app.cfg.AppHttpServer.Port)
 		initHttpRouter(app)

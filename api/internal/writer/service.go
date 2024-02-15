@@ -23,6 +23,7 @@ type Service interface {
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error)
+	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 
 var _ Service = (*service)(nil)
@@ -94,4 +95,8 @@ func (s *service) GetSubExpressionIsLast(ctx context.Context, seId int64) (bool,
 
 func (s *service) GetReadySubExpressions(ctx context.Context, expressionId *int64) ([]domain.SubExpression, error) {
 	return s.repo.GetReadySubExpressions(ctx, expressionId)
+}
+
+func (s *service) SkipAgentSubExpressions(ctx context.Context, agent string) error {
+	return s.repo.SkipAgentSubExpressions(ctx, agent)
 }

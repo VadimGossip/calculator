@@ -7,6 +7,8 @@ import (
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
 	"github.com/VadimGossip/calculator/api/internal/validation"
 	"github.com/VadimGossip/calculator/api/internal/writer"
+	"github.com/sirupsen/logrus"
+	"time"
 )
 
 type service struct {
@@ -26,6 +28,7 @@ type Service interface {
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error
+	RunProcessWatchers(ctx context.Context)
 }
 
 var _ Service = (*service)(nil)
@@ -159,4 +162,60 @@ func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result 
 		return s.writerService.UpdateExpression(ctx, e)
 	}
 	return s.prepareAndPublish(ctx, &e.Id)
+}
+
+func (s *service) runHungProcessWatcher(ctx context.Context) {
+	logrus.Info("HungProcessWatcher started")
+	defer logrus.Info("HungProcessWatcher stopped")
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			logrus.Info("HungProcessWatcher. Checking hung subexpressions")
+			if err := s.prepareAndPublish(ctx, nil); err != nil {
+				logrus.Infof("HungProcessWatcher. prepare and publish err %s", err)
+			}
+		}
+	}
+}
+
+func (s *service) checkAgents(ctx context.Context) error {
+	agents, err := s.writerService.GetAgents(ctx)
+	if err != nil {
+		return err
+	}
+	for _, agent := range agents {
+		tp := time.Since(agent.LastHeartbeatAt)
+		if tp > 5*time.Minute {
+			logrus.Infof("Agent %s Last HeartBeatAt %s TimePassed %s Allowed %s. All Agent Task will be skipped.", agent.Name, agent.LastHeartbeatAt, tp, 5*time.Minute)
+			return s.writerService.SkipAgentSubExpressions(ctx, agent.Name)
+		}
+	}
+	return nil
+}
+
+func (s *service) runAgentsWatcher(ctx context.Context) {
+	logrus.Info("AgentsWatcher started")
+	defer logrus.Info("AgentsWatcher stopped")
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			logrus.Info("AgentsWatcher. Checking last agents heartbeat")
+			if err := s.checkAgents(ctx); err != nil {
+				logrus.Infof("AgentsWatcher. checkAgents err %s", err)
+			}
+		}
+	}
+}
+
+func (s *service) RunProcessWatchers(ctx context.Context) {
+	go s.runHungProcessWatcher(ctx)
+	go s.runAgentsWatcher(ctx)
 }

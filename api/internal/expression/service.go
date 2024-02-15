@@ -5,17 +5,19 @@ import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
+	"github.com/VadimGossip/calculator/api/internal/validation"
 	"github.com/VadimGossip/calculator/api/internal/writer"
 )
 
 type service struct {
-	parseService  parser.Service
-	writerService writer.Service
-	producer      rabbitmq.Producer
-	events        chan *int64
+	parseService      parser.Service
+	validationService validation.Service
+	writerService     writer.Service
+	producer          rabbitmq.Producer
 }
 
 type Service interface {
+	ValidateAndSimplify(value string) (string, error)
 	RegisterExpression(ctx context.Context, value string) (int64, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
@@ -28,8 +30,8 @@ type Service interface {
 
 var _ Service = (*service)(nil)
 
-func NewService(parseService parser.Service, writerService writer.Service, producer rabbitmq.Producer) *service {
-	return &service{parseService: parseService, writerService: writerService, producer: producer}
+func NewService(parseService parser.Service, validationService validation.Service, writerService writer.Service, producer rabbitmq.Producer) *service {
+	return &service{parseService: parseService, validationService: validationService, writerService: writerService, producer: producer}
 }
 
 func (s *service) prepareSubExpressionQueryData(ctx context.Context, expressionId *int64) ([]domain.SubExpressionQueryItem, error) {
@@ -66,6 +68,10 @@ func (s *service) prepareAndPublish(ctx context.Context, expressionId *int64) er
 		return err
 	}
 	return s.publishSubExpressionQueryData(readySe)
+}
+
+func (s *service) ValidateAndSimplify(value string) (string, error) {
+	return s.validationService.ValidateAndSimplify(value)
 }
 
 func (s *service) RegisterExpression(ctx context.Context, value string) (int64, error) {

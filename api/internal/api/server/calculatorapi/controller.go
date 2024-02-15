@@ -33,8 +33,16 @@ func (ctrl *controller) CreateExpression(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, CreateExpressionResponse{Error: errMsg, Status: http.StatusBadRequest})
 		return
 	}
-	//validateService
-	id, err := ctrl.expressionService.RegisterExpression(c.Request.Context(), req.ExpressionValue)
+	value, err := ctrl.expressionService.ValidateAndSimplify(req.ExpressionValue)
+	if err != nil {
+		errMsg := fmt.Sprintf("validate expression error: %s", err)
+		logrus.WithFields(logrus.Fields{
+			"request": "CreateExpression",
+		}).Error(errMsg)
+		c.JSON(http.StatusOK, CreateExpressionResponse{Error: errMsg, Status: http.StatusOK})
+		return
+	}
+	id, err := ctrl.expressionService.RegisterExpression(c.Request.Context(), value)
 	if err != nil {
 		errMsg := fmt.Sprintf("create expression error: %s", err)
 		logrus.WithFields(logrus.Fields{

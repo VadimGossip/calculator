@@ -24,7 +24,7 @@ docker compose up -d
 ```
 migrate -path ./schema -database "postgres://postgres:postgres@localhost:5432/calculator_db?sslmode=disable" up
 ```
-Для удаления таблицу
+Для удаления таблиц
 ```
 migrate -path ./schema -database "postgres://postgres:postgres@localhost:5432/calculator_db?sslmode=disable" down
 ```

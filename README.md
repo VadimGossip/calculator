@@ -54,69 +54,19 @@ curl --location --request GET 'http://localhost:8080/expression'
 ```
 Выражения могут быть в процессе расчета, рассчитаны с ошибкой(деление на 0), расчитаны без ошибки.
 3) Запрос на добавление замедления для той или иной математической операции. Так как мы имитируем нагрузку на вычислителях. Каждую из четырех допустимых
-математических операций можно замедлить. Замедление передается в ms. Допустимы значения от 0 до 
-
-Сервис принимает POST запросы на https://{subproject_name}-{env_name}.etservice.net/update_acc
-
-Формат запроса
-
+математических операций можно замедлить. Замедление передается в ms. Допустимы значения от 0 до 65535
+Если длительность уже зарегистрированна, ее значение будет перезаписано на новое переданное в запросе. По умолчанию замедление 0.
 ```
-type UpdateAccRequest struct {
-	Id               uint64 `json:"id" binding:"required"`
-	AccId            uint64 `json:"acc_id" binding:"required"`
-	AccAllowOutgoing *int   `json:"acc_allow_outgoing,omitempty"`
-	AccAllowIncoming *int   `json:"acc_allow_incoming,omitempty"`
-}
+curl --location --request POST 'http://localhost:8080/duration' --header 'Content-Type: application/json' --data '{
+    "+":5000,
+    "-":5000,
+    "*":1000,
+    "/":10000
+}'
+```
+4) Запрос на возвращение всех Агентов. Возращает список зарегистрированных агентов-вычислителей, с их именем, датой создания и heartbeat.
 ```
 
-Формат ответа
-
-```
-type CommonResponse struct {
-	Status int    `json:"status"`
-	Error  string `json:"error,omitempty"`
-}
-```
-
-Валидация
-Обязательнымы являются
-id - id запроса
-acc_id - account id параметры, которого мы будем менять.
-Также должно быть обязательно заполнено одно из полей состояния, либо acc_allow_outgoing, либо acc_allow_incoming, допустима передача обоих полей.
-
-### Health
-Формат ответа
-```
-type HealthResponse struct {
-	Status       string    `json:"status"`
-	AppStartedAt time.Time `json:"app_started_at"`
-}
-```
-В ответе мы получаем инормацию о том, что http сервер сервиса поднят/не поднят и дату старта сериса.
-
-### Metrics
-В качестве метрики мы логируем дополнительно ответы на все запросы.
-
-Пример:
-```
-tj_acl_alaris_api_response{code="200",error="",method="POST",path="/update_acc"} 1
-tj_acl_alaris_api_response{code="400",error="Parse request error: Key: 'UpdateAccRequest.AccId' Error:Field validation for 'AccId' failed on the 'required' tag",method="POST",path="/update_acc"} 1
 ```
 
 ## Переменные окружения
-APP_HTTP_PORT: "8080"
-ALARIS_API_BASEURL: "http://xxxx.com:port"
-ALARIS_API_AUTHKEY: "key_value"
-
-
-## Распределенный вычислитель арифметических выражений
-
-
-
-### В основе лежит следующее тестовое задание
-
-
-
-### Реализация
-
-В моей реализации комплекс состоит из некоторого сервиса api, блокера сообщений RabbitMQ, базы данных Postgres, и сервиса вычислителя, и

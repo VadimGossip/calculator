@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/VadimGossip/calculator/agent/internal/api/client/calculatorapi"
 	"github.com/VadimGossip/calculator/agent/internal/domain"
@@ -57,8 +58,13 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 		Id:    item.Id,
 		Agent: s.cfg.Name,
 	})
+	if startResp.Error != "" {
+		logrus.Infof("received error on start eval attempt %s", startResp.Error)
+		return errors.New(startResp.Error)
+	}
 
-	if startResp.Skip == true {
+	if !startResp.Success {
+		logrus.Infof("failed to start eval attempt startResp.Success = false")
 		return nil
 	}
 

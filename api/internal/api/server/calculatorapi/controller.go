@@ -2,6 +2,7 @@ package calculatorapi
 
 import (
 	"fmt"
+	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/expression"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -24,7 +25,6 @@ func NewController(expressionService expression.Service) *controller {
 
 func (ctrl *controller) CreateExpression(c *gin.Context) {
 	var req CreateExpressionRequest
-
 	if err := c.BindJSON(&req); err != nil {
 		errMsg := fmt.Sprintf("Parse request error: %s", err)
 		logrus.WithFields(logrus.Fields{
@@ -33,17 +33,21 @@ func (ctrl *controller) CreateExpression(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, CreateExpressionResponse{Error: errMsg, Status: http.StatusBadRequest})
 		return
 	}
-	value, err := ctrl.expressionService.ValidateAndSimplify(req.ExpressionValue)
-	if err != nil {
-		errMsg := fmt.Sprintf("validate expression error: %s", err)
-		logrus.WithFields(logrus.Fields{
-			"request": "CreateExpression",
-		}).Error(errMsg)
-		c.JSON(http.StatusOK, CreateExpressionResponse{Error: errMsg, Status: http.StatusOK})
-		return
+	e := &domain.Expression{
+		ReqUid: req.ReqUid,
+		Value:  req.ExpressionValue,
 	}
-	id, err := ctrl.expressionService.RegisterExpression(c.Request.Context(), value)
+
+	simplifiedValue, err := ctrl.expressionService.ValidateAndSimplify(e.Value)
 	if err != nil {
+		e.State = domain.ExpressionStateError
+		e.ErrorMsg = fmt.Sprintf("validate expression error: %s", err)
+	} else {
+		e.State = domain.ExpressionStateNew
+		e.Value = simplifiedValue
+	}
+
+	if err = ctrl.expressionService.RegisterExpression(c.Request.Context(), e); err != nil {
 		errMsg := fmt.Sprintf("create expression error: %s", err)
 		logrus.WithFields(logrus.Fields{
 			"request": "CreateExpression",
@@ -51,8 +55,7 @@ func (ctrl *controller) CreateExpression(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, CreateExpressionResponse{Error: errMsg, Status: http.StatusInternalServerError})
 		return
 	}
-
-	c.JSON(http.StatusOK, CreateExpressionResponse{Id: id, Status: http.StatusOK})
+	c.JSON(http.StatusOK, CreateExpressionResponse{Expression: e, Error: e.ErrorMsg, Status: http.StatusOK})
 }
 
 func (ctrl *controller) GetAllExpressions(c *gin.Context) {
@@ -98,7 +101,7 @@ func (ctrl *controller) StartSubExpressionEval(c *gin.Context) {
 		return
 	}
 
-	skip, err := ctrl.expressionService.StartSubExpressionEval(c.Request.Context(), req.Id, req.Agent)
+	success, err := ctrl.expressionService.StartSubExpressionEval(c.Request.Context(), req.Id, req.Agent)
 	if err != nil {
 		errMsg := fmt.Sprintf("start sub expression eval error: %s", err)
 		logrus.WithFields(logrus.Fields{
@@ -107,7 +110,7 @@ func (ctrl *controller) StartSubExpressionEval(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, StartSubExpressionEvalResponse{Error: errMsg, Status: http.StatusInternalServerError})
 		return
 	}
-	c.JSON(http.StatusOK, StartSubExpressionEvalResponse{Skip: skip, Status: http.StatusOK})
+	c.JSON(http.StatusOK, StartSubExpressionEvalResponse{Success: success, Status: http.StatusOK})
 }
 
 func (ctrl *controller) StopSubExpressionEval(c *gin.Context) {

@@ -3,6 +3,7 @@ package writer
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"time"
 )
@@ -11,6 +12,8 @@ type Repository interface {
 	CreateExpression(ctx context.Context, e *domain.Expression) error
 	UpdateExpression(ctx context.Context, e domain.Expression) error
 	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
+	GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error)
+	GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	GetAgent(ctx context.Context, key string) (domain.Agent, error)
 	CreateAgent(ctx context.Context, name string) error
@@ -79,12 +82,11 @@ func valPointerToNullVal(val any) any {
 }
 
 func (r *repository) CreateExpression(ctx context.Context, e *domain.Expression) error {
-	createStmt := "INSERT INTO expressions(value, state, created_at)" +
-		"VALUES ($1, $2, $3) RETURNING id"
+	createStmt := "INSERT INTO expressions(req_uid, value, state, error_msg, created_at)" +
+		"VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at"
 
-	return r.db.QueryRowContext(ctx, createStmt,
-		e.Value, domain.ExpressionStateNew, time.Now()).
-		Scan(&e.Id)
+	return r.db.QueryRowContext(ctx, createStmt, e.ReqUid, e.Value, e.State, e.ErrorMsg, time.Now()).
+		Scan(&e.Id, &e.CreatedAt)
 }
 
 func (r *repository) UpdateExpression(ctx context.Context, e domain.Expression) error {
@@ -105,11 +107,13 @@ func (r *repository) UpdateExpression(ctx context.Context, e domain.Expression) 
 func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error) {
 	var e domain.Expression
 	selectStmt := `SELECT e.id
+                         ,e.req_uid
 	    				 ,e.value
 					     ,max(case
 							   when se.is_last then se.result
 					      end) as result
 					     ,e.state
+                         ,e.error_msg
 					     ,e.created_at
 					     ,min(se.eval_started_at) as eval_started_at
 					     ,max(se.eval_finished_at) as eval_finished_at
@@ -120,6 +124,7 @@ func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64)
 							      where se2.id = $1
 								    and  se2.expression_id = se.expression_id)
 				 group by e.id
+				         ,e.req_uid
 					     ,e.value
 					     ,e.result
 					     ,e.state
@@ -127,14 +132,63 @@ func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64)
 					     ,e.created_at
 					     ,e.eval_started_at
 					     ,e.eval_finished_at;`
-	return e, r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.Value, &e.Result, &e.State, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt)
+	return e, r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt)
+}
+
+func (r *repository) GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error) {
+	var e domain.Expression
+	selectStmt := `SELECT e.id
+	    				 ,e.req_uid
+                         ,e.value
+					     ,e.result
+					     ,e.state
+                         ,e.error_msg
+					     ,e.created_at
+					     ,e.eval_started_at
+					     ,e.eval_finished_at
+			   	     FROM expressions e
+				     JOIN sub_expressions se ON se.expression_id = e.id
+                    WHERE se.id = $1;`
+
+	if err := r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &e, nil
+}
+
+func (r *repository) GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error) {
+	var e domain.Expression
+	selectStmt := `SELECT e.id
+	    				 ,e.req_uid
+                         ,e.value
+					     ,e.result
+					     ,e.state
+                         ,e.error_msg
+					     ,e.created_at
+					     ,e.eval_started_at
+					     ,e.eval_finished_at
+			   	     FROM expressions e
+                    WHERE e.req_uid = $1;`
+
+	if err := r.db.QueryRowContext(ctx, selectStmt, reqUid).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &e, nil
 }
 
 func (r *repository) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
 	selectStmt := `SELECT id 
+                         ,req_uid
                          ,value
                          ,result
                          ,state
+                         ,error_msg
                          ,created_at
                          ,eval_started_at
                          ,eval_finished_at
@@ -146,7 +200,7 @@ func (r *repository) GetExpressions(ctx context.Context) ([]domain.Expression, e
 	result := make([]domain.Expression, 0)
 	for rows.Next() {
 		var e domain.Expression
-		if err = rows.Scan(&e.Id, &e.Value, &e.Result, &e.State, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+		if err = rows.Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, e)
@@ -295,7 +349,7 @@ func (r *repository) StartSubExpressionEval(ctx context.Context, seId int64, age
 		return false, err
 	}
 
-	return rows != 1, nil
+	return rows == 1, nil
 }
 
 func (r *repository) StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error {

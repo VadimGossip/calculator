@@ -11,6 +11,7 @@ const (
 
 type Expression struct {
 	Id             int64      `json:"expression_id"`
+	ReqUid         string     `json:"req_uid"`
 	Value          string     `json:"expression_value"`
 	Result         *float64   `json:"result"`
 	State          string     `json:"status"`

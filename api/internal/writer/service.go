@@ -14,6 +14,8 @@ type Service interface {
 	CreateExpression(ctx context.Context, e *domain.Expression) error
 	UpdateExpression(ctx context.Context, e domain.Expression) error
 	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
+	GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error)
+	GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error)
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
@@ -42,6 +44,14 @@ func (s *service) UpdateExpression(ctx context.Context, e domain.Expression) err
 }
 func (s *service) GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error) {
 	return s.repo.GetExpressionSummaryBySeId(ctx, seId)
+}
+
+func (s *service) GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error) {
+	return s.repo.GetExpressionBySeId(ctx, seId)
+}
+
+func (s *service) GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error) {
+	return s.repo.GetExpressionByReqUid(ctx, reqUid)
 }
 
 func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {

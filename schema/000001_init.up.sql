@@ -1,7 +1,8 @@
 --migrate -path ./schema -database "postgres://postgres:postgres@localhost:5432/calculator_db?sslmode=disable" up
 create table expressions
 (
-    id               serial                  not null unique,
+    id               serial    primary key,
+    req_uid          varchar(2000)           not null,
     value            varchar(255)            not null,
     result           numeric(50, 5),
     state            varchar(255)            not null,
@@ -11,24 +12,27 @@ create table expressions
     eval_finished_at timestamp
 );
 
+create index in_expressions_req_uid on expressions(req_uid);
+
 create table agents
 (
-    name              varchar(255)  not null unique,
+    name              varchar(255)  primary key,
     created_at        timestamp default now() not null,
     last_heartbeat_at timestamp default now() not null
 );
 
 create table operation_durations
 (
-    operation_name   varchar(255)  not null unique,
+    operation_name   varchar(255)  primary key,
     duration         numeric(7) not null,
     created_at       timestamp default now() not null,
     updated_at       timestamp default now() not null
 );
 
+
 create table sub_expressions
 (
-    id                 serial                  not null unique,
+    id                 serial                  primary key,
     expression_id      integer,
     val1               numeric(50, 5),
     val2               numeric(50, 5),
@@ -41,3 +45,7 @@ create table sub_expressions
     eval_finished_at   timestamp,
     is_last            boolean default false
 );
+
+alter table sub_expressions add foreign key (expression_id) REFERENCES expressions;
+
+create index in_se_expression_id on sub_expressions(expression_id);

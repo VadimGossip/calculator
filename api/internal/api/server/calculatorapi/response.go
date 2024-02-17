@@ -3,9 +3,9 @@ package calculatorapi
 import "github.com/VadimGossip/calculator/api/internal/domain"
 
 type CreateExpressionResponse struct {
-	Id     int64  `json:"expression_id,omitempty" example:"1"`
-	Error  string `json:"error,omitempty" example:"parse error"`
-	Status int    `json:"status" example:"200"`
+	Expression *domain.Expression `json:"expression,omitempty"`
+	Error      string             `json:"error,omitempty" example:"parse error"`
+	Status     int                `json:"status" example:"200"`
 }
 
 type GetExpressionsResponse struct {
@@ -32,7 +32,7 @@ type GetOperationDurationsResponse struct {
 }
 
 type StartSubExpressionEvalResponse struct {
-	Error  string `json:"error,omitempty"`
-	Status int    `json:"status" example:"200"`
-	Skip   bool   `json:"skip" example:"false"`
+	Error   string `json:"error,omitempty"`
+	Status  int    `json:"status" example:"200"`
+	Success bool   `json:"success" example:"false"`
 }

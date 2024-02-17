@@ -21,7 +21,7 @@ type service struct {
 
 type Service interface {
 	ValidateAndSimplify(value string) (string, error)
-	RegisterExpression(ctx context.Context, value string) (int64, error)
+	RegisterExpression(ctx context.Context, e *domain.Expression) error
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
@@ -78,36 +78,44 @@ func (s *service) ValidateAndSimplify(value string) (string, error) {
 	return s.validationService.ValidateAndSimplify(value)
 }
 
-func (s *service) RegisterExpression(ctx context.Context, value string) (int64, error) {
-	e := domain.Expression{Value: value}
-
-	if err := s.writerService.CreateExpression(ctx, &e); err != nil {
-		return 0, err
+func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) error {
+	existing, err := s.writerService.GetExpressionByReqUid(ctx, e.ReqUid)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		*e = *existing
+		return nil
 	}
 
-	idDict := make(map[int64]int64)
-	for _, se := range s.parseService.ParseExpression(e) {
-		enrichedSe := se
-		if se.SubExpressionId1 != nil {
-			if val, ok := idDict[*se.SubExpressionId1]; ok {
-				enrichedSe.SubExpressionId1 = &val
+	if err = s.writerService.CreateExpression(ctx, e); err != nil {
+		return err
+	}
+
+	if e.ErrorMsg == "" {
+		idDict := make(map[int64]int64)
+		for _, se := range s.parseService.ParseExpression(*e) {
+			enrichedSe := se
+			if se.SubExpressionId1 != nil {
+				if val, ok := idDict[*se.SubExpressionId1]; ok {
+					enrichedSe.SubExpressionId1 = &val
+				}
 			}
-		}
-		if se.SubExpressionId2 != nil {
-			if val, ok := idDict[*se.SubExpressionId2]; ok {
-				enrichedSe.SubExpressionId2 = &val
+			if se.SubExpressionId2 != nil {
+				if val, ok := idDict[*se.SubExpressionId2]; ok {
+					enrichedSe.SubExpressionId2 = &val
+				}
 			}
+			if err = s.writerService.CreateSubExpression(ctx, &enrichedSe); err != nil {
+				return err
+			}
+			idDict[se.Id] = enrichedSe.Id
 		}
-		if err := s.writerService.CreateSubExpression(ctx, &enrichedSe); err != nil {
-			return 0, err
+		if err = s.prepareAndPublish(ctx, &e.Id); err != nil {
+			return err
 		}
-		idDict[se.Id] = enrichedSe.Id
 	}
-	if err := s.prepareAndPublish(ctx, &e.Id); err != nil {
-		return 0, err
-	}
-
-	return e.Id, nil
+	return nil
 }
 
 func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
@@ -136,6 +144,17 @@ func (s *service) GetOperationDurations(ctx context.Context) ([]domain.Operation
 }
 
 func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error) {
+	e, err := s.writerService.GetExpressionBySeId(ctx, seId)
+	if err != nil {
+		return false, err
+	}
+	if e.State == domain.ExpressionStateNew {
+		e.State = domain.ExpressionStateInProgress
+		if err = s.writerService.UpdateExpression(ctx, *e); err != nil {
+			return false, err
+		}
+	}
+
 	return s.writerService.StartSubExpressionEval(ctx, seId, agent)
 }
 

@@ -1,6 +1,7 @@
 package calculatorapi
 
 type CreateExpressionRequest struct {
+	ReqUid          string `json:"req_uid" binding:"required" example:"5009e86d"`
 	ExpressionValue string `json:"expression" binding:"required" example:"2+2+2"`
 }
 

@@ -3,8 +3,8 @@ package rabbitmq
 import (
 	"encoding/json"
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	"sync"
 )
 

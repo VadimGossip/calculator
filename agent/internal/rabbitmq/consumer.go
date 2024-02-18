@@ -6,8 +6,8 @@ import (
 	"github.com/VadimGossip/calculator/agent/internal/domain"
 	"github.com/VadimGossip/calculator/agent/internal/worker"
 	"github.com/VadimGossip/calculator/agent/pkg/workerctrl"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	"time"
 )
 

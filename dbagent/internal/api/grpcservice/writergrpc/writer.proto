@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package writer;
+
+option go_package = "github.com/VadimGossip/calculator/dbagent/api/grpcservice/writergrpc";
+
+message HeartbeatRequest {
+  string agentName = 1;
+}
+
+message HeartbeatResponse {
+  string error = 1;
+}
+
+service WriterService {
+  rpc Heartbeat(HeartbeatRequest) returns(HeartbeatResponse);
+}

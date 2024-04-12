@@ -44,7 +44,7 @@ services:
     depends_on:
       - postgres
       - message-broker
-  calculator-agent1:
+  alculator-agent1:
     container_name: calculator-agent1
     build:
       context: .

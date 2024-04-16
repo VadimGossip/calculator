@@ -30,7 +30,7 @@ func (c *controller) StartEval(ctx context.Context, req *writergrpc.StartEvalReq
 }
 
 func (c *controller) StopEval(ctx context.Context, req *writergrpc.StopEvalRequest) (*emptypb.Empty, error) {
-	result := new(float64)
+	var result *float64
 	if req.Error == "" {
 		result = &req.Result
 	}

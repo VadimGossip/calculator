@@ -25,8 +25,28 @@ message StopEvalRequest {
   string error = 3;
 }
 
+message ReadySubExpressionsRequest {
+  int64 seId = 1;
+  bool seIsValid = 2;
+  uint32 skipTimeoutSec = 3;
+}
+
+message SubExpression {
+  int64 seId = 1;
+  double val1 = 2;
+  double val2 = 3;
+  string operation = 4;
+  uint32 operationDuration = 5;
+  bool isLast = 6;
+}
+
+message ReadySubExpressionsResponse {
+  repeated SubExpression subExpressions = 1;
+}
+
 service WriterService {
   rpc Heartbeat(HeartbeatRequest) returns(google.protobuf.Empty);
   rpc StartEval(StartEvalRequest) returns(StartEvalResponse);
   rpc StopEval(StopEvalRequest) returns(google.protobuf.Empty);
+  rpc GetReadySubExpressions(ReadySubExpressionsRequest) returns(ReadySubExpressionsResponse);
 }

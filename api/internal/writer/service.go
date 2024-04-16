@@ -25,7 +25,6 @@ type Service interface {
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
-	GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 

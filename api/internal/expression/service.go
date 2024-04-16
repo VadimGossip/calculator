@@ -2,6 +2,7 @@ package expression
 
 import (
 	"context"
+	wc "github.com/VadimGossip/calculator/api/internal/api/client/writer"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
@@ -16,6 +17,7 @@ type service struct {
 	parseService      parser.Service
 	validationService validation.Service
 	writerService     writer.Service
+	writerClient      wc.Client
 	producer          rabbitmq.Producer
 }
 
@@ -23,41 +25,23 @@ type Service interface {
 	ValidateAndSimplify(value string) (string, error)
 	RegisterExpression(ctx context.Context, e *domain.Expression) error
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
-	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	SaveOperationDurations(ctx context.Context, data map[string]uint16) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
-	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
-	StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 	RunProcessWatchers(ctx context.Context)
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(cfg domain.ExpressionCfg, parseService parser.Service, validationService validation.Service, writerService writer.Service, producer rabbitmq.Producer) *service {
-	return &service{cfg: cfg, parseService: parseService, validationService: validationService, writerService: writerService, producer: producer}
+func NewService(cfg domain.ExpressionCfg, parseService parser.Service, validationService validation.Service, writerService writer.Service, writerClient wc.Client, producer rabbitmq.Producer) *service {
+	return &service{cfg: cfg, parseService: parseService, validationService: validationService, writerService: writerService, writerClient: writerClient, producer: producer}
 }
 
-func (s *service) prepareSubExpressionQueryData(ctx context.Context, expressionId *int64) ([]domain.SubExpressionQueryItem, error) {
-	seReady, err := s.writerService.GetReadySubExpressions(ctx, expressionId, time.Duration(s.cfg.HungTimeout)*time.Minute)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]domain.SubExpressionQueryItem, 0, len(seReady))
-	for _, se := range seReady {
-		item := domain.SubExpressionQueryItem{
-			Id:        se.Id,
-			Val1:      *se.Val1,
-			Val2:      *se.Val2,
-			Operation: se.Operation,
-			Duration:  se.OperationDuration,
-		}
-		result = append(result, item)
-	}
-	return result, nil
+func (s *service) prepareSubExpressionQueryData(ctx context.Context, eId *int64) ([]domain.ReadySubExpression, error) {
+	return s.writerClient.GetReadySubExpressions(ctx, eId, uint32(s.cfg.HungTimeout))
 }
 
-func (s *service) publishSubExpressionQueryData(readySe []domain.SubExpressionQueryItem) error {
+func (s *service) publishSubExpressionQueryData(readySe []domain.ReadySubExpression) error {
 	for _, item := range readySe {
 		if err := s.producer.SendMessage("", "application/json", item); err != nil {
 			return err
@@ -122,10 +106,6 @@ func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, erro
 	return s.writerService.GetExpressions(ctx)
 }
 
-func (s *service) SaveAgentHeartbeat(ctx context.Context, name string) error {
-	return s.writerService.SaveAgentHeartbeat(ctx, name)
-}
-
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 	return s.writerService.GetAgents(ctx)
 }
@@ -141,47 +121,6 @@ func (s *service) SaveOperationDurations(ctx context.Context, data map[string]ui
 
 func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {
 	return s.writerService.GetOperationDurations(ctx)
-}
-
-func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error) {
-	e, err := s.writerService.GetExpressionBySeId(ctx, seId)
-	if err != nil {
-		return false, err
-	}
-	if e.State == domain.ExpressionStateNew {
-		e.State = domain.ExpressionStateInProgress
-		if err = s.writerService.UpdateExpression(ctx, *e); err != nil {
-			return false, err
-		}
-	}
-
-	return s.writerService.StartSubExpressionEval(ctx, seId, agent)
-}
-
-func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
-	if err := s.writerService.StopSubExpressionEval(ctx, seId, result); err != nil {
-		return err
-	}
-	e, err := s.writerService.GetExpressionSummaryBySeId(ctx, seId)
-	if err != nil {
-		return err
-	}
-
-	if result == nil {
-		e.ErrorMsg = errMsg
-		e.State = domain.ExpressionStateError
-		return s.writerService.UpdateExpression(ctx, e)
-	}
-
-	isLast, err := s.writerService.GetSubExpressionIsLast(ctx, seId)
-	if err != nil {
-		return err
-	}
-	if isLast {
-		e.State = domain.ExpressionStateOK
-		return s.writerService.UpdateExpression(ctx, e)
-	}
-	return s.prepareAndPublish(ctx, &e.Id)
 }
 
 func (s *service) runHungProcessWatcher(ctx context.Context) {

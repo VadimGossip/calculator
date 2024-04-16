@@ -11,6 +11,10 @@ import (
 
 type Controller interface {
 	CreateExpression(c *gin.Context)
+	GetAllExpressions(c *gin.Context)
+	GetAllAgents(c *gin.Context)
+	SaveOperationDurations(c *gin.Context)
+	GetAllOperationDurations(c *gin.Context)
 }
 
 type controller struct {
@@ -69,71 +73,6 @@ func (ctrl *controller) GetAllExpressions(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, GetExpressionsResponse{Expressions: expressions, Status: http.StatusOK})
-}
-
-func (ctrl *controller) AgentHeartbeat(c *gin.Context) {
-	var err error
-	if err = c.Request.ParseForm(); err != nil {
-		c.JSON(http.StatusBadRequest, CommonResponse{Status: http.StatusBadRequest, Error: "parse request error " + err.Error()})
-		return
-	}
-	if err = ctrl.expressionService.SaveAgentHeartbeat(c.Request.Context(), c.Request.Form.Get("name")); err != nil {
-		errMsg := fmt.Sprintf("Register agent heartbeat error: %s", err)
-		logrus.WithFields(logrus.Fields{
-			"request": "AgentHeartbeat",
-		}).Error(errMsg)
-		c.JSON(http.StatusInternalServerError, CommonResponse{Status: http.StatusInternalServerError, Error: errMsg})
-		return
-	}
-
-	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
-}
-
-func (ctrl *controller) StartSubExpressionEval(c *gin.Context) {
-	var req StartSubExpressionEvalRequest
-
-	if err := c.BindJSON(&req); err != nil {
-		errMsg := fmt.Sprintf("Parse request error: %s", err)
-		logrus.WithFields(logrus.Fields{
-			"request": "StartSubExpressionEval",
-		}).Error(errMsg)
-		c.JSON(http.StatusBadRequest, StartSubExpressionEvalResponse{Error: errMsg, Status: http.StatusBadRequest})
-		return
-	}
-
-	success, err := ctrl.expressionService.StartSubExpressionEval(c.Request.Context(), req.Id, req.Agent)
-	if err != nil {
-		errMsg := fmt.Sprintf("start sub expression eval error: %s", err)
-		logrus.WithFields(logrus.Fields{
-			"request": "StartSubExpressionEval",
-		}).Error(errMsg)
-		c.JSON(http.StatusInternalServerError, StartSubExpressionEvalResponse{Error: errMsg, Status: http.StatusInternalServerError})
-		return
-	}
-	c.JSON(http.StatusOK, StartSubExpressionEvalResponse{Success: success, Status: http.StatusOK})
-}
-
-func (ctrl *controller) StopSubExpressionEval(c *gin.Context) {
-	var req StopSubExpressionEvalRequest
-
-	if err := c.BindJSON(&req); err != nil {
-		errMsg := fmt.Sprintf("Parse request error: %s", err)
-		logrus.WithFields(logrus.Fields{
-			"request": "StopSubExpressionEval",
-		}).Error(errMsg)
-		c.JSON(http.StatusBadRequest, CommonResponse{Error: errMsg, Status: http.StatusBadRequest})
-		return
-	}
-
-	if err := ctrl.expressionService.StopSubExpressionEval(c.Request.Context(), req.Id, req.Result, req.Error); err != nil {
-		errMsg := fmt.Sprintf("stop sub expression eval error: %s", err)
-		logrus.WithFields(logrus.Fields{
-			"request": "StopSubExpressionEval",
-		}).Error(errMsg)
-		c.JSON(http.StatusInternalServerError, CommonResponse{Error: errMsg, Status: http.StatusInternalServerError})
-		return
-	}
-	c.JSON(http.StatusOK, CommonResponse{Status: http.StatusOK})
 }
 
 func (ctrl *controller) GetAllAgents(c *gin.Context) {

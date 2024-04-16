@@ -28,7 +28,7 @@ type Repository interface {
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	DeleteSubExpressions(ctx context.Context, seId int64) error
-	GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error)
+	GetReadySubExpressions(ctx context.Context, eId *int64, skipTimeoutSec uint32) ([]domain.SubExpression, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 
@@ -399,13 +399,14 @@ func (r *repository) SkipStartSubExpressionEval(ctx context.Context, seId int64)
 	return nil
 }
 
-func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error) {
+func (r *repository) GetReadySubExpressions(ctx context.Context, eId *int64, skipTimeoutSec uint32) ([]domain.SubExpression, error) {
 	selectStmt := `select se.id
 			     		  ,coalesce(se.val1, se1.result) as val1
 				    	  ,coalesce(se.val2, se2.result) as val2
 						  ,se.operation_name
      					  ,coalesce(d.duration, 0) as operation_duration
-						  ,se.eval_started_at						  
+						  ,se.eval_started_at
+						  ,se.is_last
 					 from sub_expressions se
 				left join sub_expressions se1 on se.sub_expression_id1 = se1.id
 				left join sub_expressions se2 on se.sub_expression_id2 = se2.id
@@ -415,7 +416,7 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 					  and coalesce(se.val2, se2.result) is not null
 					  and se.result is null
                       and se.eval_finished_at is null;`
-	rows, err := r.db.QueryContext(ctx, selectStmt, valPointerToNullVal(expressionId))
+	rows, err := r.db.QueryContext(ctx, selectStmt, valPointerToNullVal(eId))
 	if err != nil {
 		return nil, err
 	}
@@ -423,13 +424,13 @@ func (r *repository) GetReadySubExpressions(ctx context.Context, expressionId *i
 	for rows.Next() {
 		var se domain.SubExpression
 		var evalStartedAt sql.NullTime
-		if err = rows.Scan(&se.Id, &se.Val1, &se.Val2, &se.Operation, &se.OperationDuration, &evalStartedAt); err != nil {
+		if err = rows.Scan(&se.Id, &se.Val1, &se.Val2, &se.Operation, &se.OperationDuration, &evalStartedAt, &se.IsLast); err != nil {
 			return nil, err
 		}
 		if evalStartedAt.Valid {
 			se.EvalStartedAt = evalStartedAt.Time
 		}
-		isHung := time.Since(se.EvalStartedAt) > skipTimeout
+		isHung := time.Since(se.EvalStartedAt).Seconds() > float64(skipTimeoutSec)
 		if isHung {
 			if err = r.SkipStartSubExpressionEval(ctx, se.Id); err != nil {
 				return nil, err

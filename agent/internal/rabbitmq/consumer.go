@@ -163,7 +163,7 @@ func (c *consumer) subscribe(ctx context.Context) {
 }
 
 func (c *consumer) processDeliveryMsg(ctx context.Context, msg amqp.Delivery) {
-	var item domain.SubExpressionQueryItem
+	var item domain.ReadySubExpression
 	if err := json.Unmarshal(msg.Body, &item); err != nil {
 		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be thrown away", msg.Body, err)
 	}

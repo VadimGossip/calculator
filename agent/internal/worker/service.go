@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	Do(ctx context.Context, item domain.SubExpressionQueryItem) error
+	Do(ctx context.Context, item domain.ReadySubExpression) error
 	GetMaxProcessAllowed() int
 	RunHeartbeat(ctx context.Context)
 }
@@ -27,7 +27,7 @@ func NewService(cfg domain.AgentCfg, writerClient writer.Client) *service {
 	return &service{cfg: cfg, writerClient: writerClient}
 }
 
-func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
+func (s *service) eval(item domain.ReadySubExpression) (*float64, error) {
 	var result float64
 	switch item.Operation {
 	case "+":
@@ -53,7 +53,7 @@ func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
 	return nil, fmt.Errorf("unknown operation")
 }
 
-func (s *service) Do(ctx context.Context, item domain.SubExpressionQueryItem) error {
+func (s *service) Do(ctx context.Context, item domain.ReadySubExpression) error {
 	startResp, err := s.writerClient.StartEval(ctx, item.Id, s.cfg.Name)
 	if err != nil {
 		logrus.Errorf("Received error on start eval %s", err)

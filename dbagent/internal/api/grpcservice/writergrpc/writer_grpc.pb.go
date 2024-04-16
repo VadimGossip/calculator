@@ -20,9 +20,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	WriterService_Heartbeat_FullMethodName = "/writer.WriterService/Heartbeat"
-	WriterService_StartEval_FullMethodName = "/writer.WriterService/StartEval"
-	WriterService_StopEval_FullMethodName  = "/writer.WriterService/StopEval"
+	WriterService_Heartbeat_FullMethodName              = "/writer.WriterService/Heartbeat"
+	WriterService_StartEval_FullMethodName              = "/writer.WriterService/StartEval"
+	WriterService_StopEval_FullMethodName               = "/writer.WriterService/StopEval"
+	WriterService_GetReadySubExpressions_FullMethodName = "/writer.WriterService/GetReadySubExpressions"
 )
 
 // WriterServiceClient is the client API for WriterService service.
@@ -32,6 +33,7 @@ type WriterServiceClient interface {
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	StartEval(ctx context.Context, in *StartEvalRequest, opts ...grpc.CallOption) (*StartEvalResponse, error)
 	StopEval(ctx context.Context, in *StopEvalRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetReadySubExpressions(ctx context.Context, in *ReadySubExpressionsRequest, opts ...grpc.CallOption) (*ReadySubExpressionsResponse, error)
 }
 
 type writerServiceClient struct {
@@ -69,6 +71,15 @@ func (c *writerServiceClient) StopEval(ctx context.Context, in *StopEvalRequest,
 	return out, nil
 }
 
+func (c *writerServiceClient) GetReadySubExpressions(ctx context.Context, in *ReadySubExpressionsRequest, opts ...grpc.CallOption) (*ReadySubExpressionsResponse, error) {
+	out := new(ReadySubExpressionsResponse)
+	err := c.cc.Invoke(ctx, WriterService_GetReadySubExpressions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WriterServiceServer is the server API for WriterService service.
 // All implementations should embed UnimplementedWriterServiceServer
 // for forward compatibility
@@ -76,6 +87,7 @@ type WriterServiceServer interface {
 	Heartbeat(context.Context, *HeartbeatRequest) (*emptypb.Empty, error)
 	StartEval(context.Context, *StartEvalRequest) (*StartEvalResponse, error)
 	StopEval(context.Context, *StopEvalRequest) (*emptypb.Empty, error)
+	GetReadySubExpressions(context.Context, *ReadySubExpressionsRequest) (*ReadySubExpressionsResponse, error)
 }
 
 // UnimplementedWriterServiceServer should be embedded to have forward compatible implementations.
@@ -90,6 +102,9 @@ func (UnimplementedWriterServiceServer) StartEval(context.Context, *StartEvalReq
 }
 func (UnimplementedWriterServiceServer) StopEval(context.Context, *StopEvalRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopEval not implemented")
+}
+func (UnimplementedWriterServiceServer) GetReadySubExpressions(context.Context, *ReadySubExpressionsRequest) (*ReadySubExpressionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReadySubExpressions not implemented")
 }
 
 // UnsafeWriterServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -157,6 +172,24 @@ func _WriterService_StopEval_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WriterService_GetReadySubExpressions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadySubExpressionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).GetReadySubExpressions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_GetReadySubExpressions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).GetReadySubExpressions(ctx, req.(*ReadySubExpressionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WriterService_ServiceDesc is the grpc.ServiceDesc for WriterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -175,6 +208,10 @@ var WriterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopEval",
 			Handler:    _WriterService_StopEval_Handler,
+		},
+		{
+			MethodName: "GetReadySubExpressions",
+			Handler:    _WriterService_GetReadySubExpressions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

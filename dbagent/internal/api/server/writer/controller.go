@@ -34,7 +34,7 @@ func (c *controller) StopEval(ctx context.Context, req *writergrpc.StopEvalReque
 	if req.Error == "" {
 		result = &req.Result
 	}
-	return &emptypb.Empty{}, c.writer.StopSubExpressionEval(ctx, req.SeId, result)
+	return &emptypb.Empty{}, c.writer.StopSubExpressionEval(ctx, req.SeId, result, req.Error)
 }
 
 func (c *controller) Heartbeat(ctx context.Context, req *writergrpc.HeartbeatRequest) (*emptypb.Empty, error) {

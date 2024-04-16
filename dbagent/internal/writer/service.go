@@ -23,7 +23,7 @@ type Service interface {
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
-	StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error
+	StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	GetReadySubExpressions(ctx context.Context, expressionId *int64, skipTimeout time.Duration) ([]domain.SubExpression, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
@@ -93,10 +93,49 @@ func (s *service) CreateSubExpression(ctx context.Context, se *domain.SubExpress
 }
 
 func (s *service) StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error) {
+	e, err := s.repo.GetExpressionBySeId(ctx, seId)
+	if err != nil {
+		return false, err
+	}
+	if e.State == domain.ExpressionStateNew {
+		e.State = domain.ExpressionStateInProgress
+		if err = s.repo.UpdateExpression(ctx, *e); err != nil {
+			return false, err
+		}
+	}
 	return s.repo.StartSubExpressionEval(ctx, seId, agent)
 }
 
-func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64) error {
+func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
+	if err := s.repo.StopSubExpressionEval(ctx, seId, result); err != nil {
+		return err
+	}
+
+	e, err := s.repo.GetExpressionSummaryBySeId(ctx, seId)
+	if err != nil {
+		return err
+	}
+
+	if result == nil {
+		e.ErrorMsg = errMsg
+		e.State = domain.ExpressionStateError
+		return s.repo.UpdateExpression(ctx, e)
+	}
+
+	isLast, err := s.repo.GetSubExpressionIsLast(ctx, seId)
+	if err != nil {
+		return err
+	}
+
+	if isLast {
+		e.State = domain.ExpressionStateOK
+		return s.repo.UpdateExpression(ctx, e)
+	}
+
+	return nil
+}
+
+func (s *service) StopSubExpressionEval2(ctx context.Context, seId int64, result *float64) error {
 	return s.repo.StopSubExpressionEval(ctx, seId, result)
 }
 

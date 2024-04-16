@@ -69,7 +69,7 @@ func (app *App) Run() {
 	}
 	cancel()
 	if err = app.rabbitService.Shutdown(); err != nil {
-		logrus.Fatalf("Fail to shutdown RabbitMQ service %s", err)
+		logrus.Infof("Fail to shutdown RabbitMQ service %s", err)
 	}
 	if err = app.writerClient.Disconnect(); err != nil {
 		logrus.Infof("Writer grpc client disconnect error %s", err)

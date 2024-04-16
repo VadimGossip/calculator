@@ -13,7 +13,7 @@ type Controller interface {
 	Heartbeat(ctx context.Context, req *writergrpc.HeartbeatRequest) (*emptypb.Empty, error)
 	StartEval(ctx context.Context, req *writergrpc.StartEvalRequest) (*writergrpc.StartEvalResponse, error)
 	StopEval(ctx context.Context, req *writergrpc.StopEvalRequest) (*emptypb.Empty, error)
-	GetReadyToEvalSubExpressions(ctx context.Context, req *writergrpc.ReadySubExpressionsRequest) (*writergrpc.ReadySubExpressionsResponse, error)
+	GetReadySubExpressions(ctx context.Context, req *writergrpc.ReadySubExpressionsRequest) (*writergrpc.ReadySubExpressionsResponse, error)
 }
 
 type controller struct {
@@ -59,7 +59,7 @@ func (c *controller) mapSubExpressions(subExpressions []domain.SubExpression) []
 	return gses
 }
 
-func (c *controller) GetReadyToEvalSubExpressions(ctx context.Context, req *writergrpc.ReadySubExpressionsRequest) (*writergrpc.ReadySubExpressionsResponse, error) {
+func (c *controller) GetReadySubExpressions(ctx context.Context, req *writergrpc.ReadySubExpressionsRequest) (*writergrpc.ReadySubExpressionsResponse, error) {
 	var eId *int64
 	if req.SeIsValid {
 		eId = &req.SeId

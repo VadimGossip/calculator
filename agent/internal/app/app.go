@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
-	"github.com/VadimGossip/calculator/agent/internal/config"
-	"github.com/VadimGossip/calculator/agent/internal/domain"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/VadimGossip/calculator/agent/internal/config"
+	"github.com/VadimGossip/calculator/agent/internal/domain"
 )
 
 func init() {
@@ -48,6 +49,9 @@ func (app *App) Run() {
 	}
 
 	app.rabbitConsumer.Subscribe(ctx)
+	if err = app.writerClient.Connect(); err != nil {
+		logrus.Fatalf("Writer grpc client connect error %s", err)
+	}
 	go app.workerService.RunHeartbeat(ctx)
 
 	logrus.Infof("[%s] started", app.name)
@@ -64,8 +68,11 @@ func (app *App) Run() {
 		}
 	}
 	cancel()
-	if err := app.rabbitService.Shutdown(); err != nil {
+	if err = app.rabbitService.Shutdown(); err != nil {
 		logrus.Fatalf("Fail to shutdown RabbitMQ service %s", err)
+	}
+	if err = app.writerClient.Disconnect(); err != nil {
+		logrus.Infof("Writer grpc client disconnect error %s", err)
 	}
 
 	logrus.Infof("[%s] stopped", app.name)

@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/VadimGossip/calculator/agent/internal/api/client/calculatorapi"
-	"github.com/VadimGossip/calculator/agent/internal/domain"
 	"github.com/sirupsen/logrus"
 	"time"
+
+	"github.com/VadimGossip/calculator/agent/internal/api/client/calculatorapi"
+	"github.com/VadimGossip/calculator/agent/internal/api/client/writer"
+	"github.com/VadimGossip/calculator/agent/internal/domain"
 )
 
 type Service interface {
@@ -19,12 +21,13 @@ type Service interface {
 type service struct {
 	cfg                 domain.AgentCfg
 	calculatorApiClient calculatorapi.ClientService
+	writerClient        writer.Client
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(cfg domain.AgentCfg, calculatorClient calculatorapi.ClientService) *service {
-	return &service{cfg: cfg, calculatorApiClient: calculatorClient}
+func NewService(cfg domain.AgentCfg, calculatorClient calculatorapi.ClientService, writerClient writer.Client) *service {
+	return &service{cfg: cfg, calculatorApiClient: calculatorClient, writerClient: writerClient}
 }
 
 func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
@@ -100,12 +103,8 @@ func (s *service) RunHeartbeat(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			hbResp, err := s.calculatorApiClient.SendHeartRequest(s.cfg.Name)
-			if err != nil {
-				logrus.Infof("Hearbeat send error %s", err)
-			}
-			if hbResp.Error != "" {
-				logrus.Infof("Hearbeat error response %v", hbResp)
+			if err := s.writerClient.Heartbeat(ctx, s.cfg.Name); err != nil {
+				logrus.Infof("Hearbeat error %s", err)
 			}
 		}
 	}

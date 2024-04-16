@@ -44,7 +44,26 @@ services:
     depends_on:
       - postgres
       - message-broker
-  alculator-agent1:
+  calculator-dbagent:
+    container_name: calculator-dbagent
+    ports:
+      - 8085:8085
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_NAME=calculator_db
+      - DB_SSLMODE=disable
+      - DB_PASSWORD=postgres
+    build:
+      context: .
+      dockerfile: dockerfile-calculator-dbagent
+    restart: always
+    networks:
+      - calculator-network
+    depends_on:
+      - postgres
+  calculator-agent1:
     container_name: calculator-agent1
     build:
       context: .
@@ -57,6 +76,7 @@ services:
       - calculator-network
     depends_on:
       - message-broker
+      - calculator-dbagent
   calculator-agent2:
     container_name: calculator-agent2
     build:
@@ -70,6 +90,7 @@ services:
       - calculator-network
     depends_on:
       - message-broker
+      - calculator-dbagent
 
 networks:
   # Create a new Docker network.

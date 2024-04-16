@@ -156,19 +156,19 @@ func (c *consumer) subscribe(ctx context.Context) {
 			workerCtrl.Acquire(1)
 			go func(v amqp.Delivery) {
 				defer workerCtrl.Release(1)
-				c.processDeliveryMsg(v)
+				c.processDeliveryMsg(ctx, v)
 			}(v)
 		}
 	}
 }
 
-func (c *consumer) processDeliveryMsg(msg amqp.Delivery) {
+func (c *consumer) processDeliveryMsg(ctx context.Context, msg amqp.Delivery) {
 	var item domain.SubExpressionQueryItem
 	if err := json.Unmarshal(msg.Body, &item); err != nil {
 		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be thrown away", msg.Body, err)
 	}
 	logrus.Infof("message received %v", item)
-	if err := c.workerService.Do(item); err != nil {
+	if err := c.workerService.Do(ctx, item); err != nil {
 		logrus.Errorf("unmarshal msg error. msg body %s error %s. Message will be moved to dlx", msg.Body, err)
 		if err = msg.Nack(false, false); err != nil {
 			logrus.Errorf("nack msg error %s", err)

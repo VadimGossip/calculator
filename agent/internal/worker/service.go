@@ -2,32 +2,29 @@ package worker
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"time"
 
-	"github.com/VadimGossip/calculator/agent/internal/api/client/calculatorapi"
 	"github.com/VadimGossip/calculator/agent/internal/api/client/writer"
 	"github.com/VadimGossip/calculator/agent/internal/domain"
 )
 
 type Service interface {
-	Do(item domain.SubExpressionQueryItem) error
+	Do(ctx context.Context, item domain.SubExpressionQueryItem) error
 	GetMaxProcessAllowed() int
 	RunHeartbeat(ctx context.Context)
 }
 
 type service struct {
-	cfg                 domain.AgentCfg
-	calculatorApiClient calculatorapi.ClientService
-	writerClient        writer.Client
+	cfg          domain.AgentCfg
+	writerClient writer.Client
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(cfg domain.AgentCfg, calculatorClient calculatorapi.ClientService, writerClient writer.Client) *service {
-	return &service{cfg: cfg, calculatorApiClient: calculatorClient, writerClient: writerClient}
+func NewService(cfg domain.AgentCfg, writerClient writer.Client) *service {
+	return &service{cfg: cfg, writerClient: writerClient}
 }
 
 func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
@@ -56,18 +53,15 @@ func (s *service) eval(item domain.SubExpressionQueryItem) (*float64, error) {
 	return nil, fmt.Errorf("unknown operation")
 }
 
-func (s *service) Do(item domain.SubExpressionQueryItem) error {
-	startResp, err := s.calculatorApiClient.SendStartEvalRequest(&calculatorapi.StartSubExpressionEvalRequest{
-		Id:    item.Id,
-		Agent: s.cfg.Name,
-	})
-	if startResp.Error != "" {
-		logrus.Infof("received error on start eval attempt %s", startResp.Error)
-		return errors.New(startResp.Error)
+func (s *service) Do(ctx context.Context, item domain.SubExpressionQueryItem) error {
+	startResp, err := s.writerClient.StartEval(ctx, item.Id, s.cfg.Name)
+	if err != nil {
+		logrus.Errorf("Received error on start eval %s", err)
+		return err
 	}
 
 	if !startResp.Success {
-		logrus.Infof("failed to start eval attempt startResp.Success = false")
+		logrus.Infof("Failed to start eval attempt startResp.Success = false")
 		return nil
 	}
 
@@ -77,14 +71,9 @@ func (s *service) Do(item domain.SubExpressionQueryItem) error {
 		errMsg = err.Error()
 	}
 
-	stopResp, err := s.calculatorApiClient.SendStopEvalRequest(&calculatorapi.StopSubExpressionEvalRequest{
-		Id:     item.Id,
-		Result: result,
-		Error:  errMsg,
-	})
-
-	if stopResp.Error != "" {
-		return fmt.Errorf(stopResp.Error)
+	if err = s.writerClient.StopEval(ctx, item.Id, result, errMsg); err != nil {
+		logrus.Errorf("Received error on stop eval %s", err)
+		return err
 	}
 	return nil
 }

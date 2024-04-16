@@ -10,6 +10,23 @@ message HeartbeatRequest {
   string agentName = 1;
 }
 
+message StartEvalRequest {
+  int64 seId = 1;
+  string agent = 2;
+}
+
+message StartEvalResponse {
+  bool success = 1;
+}
+
+message StopEvalRequest {
+  int64 seId = 1;
+  double result = 2;
+  string error = 3;
+}
+
 service WriterService {
   rpc Heartbeat(HeartbeatRequest) returns(google.protobuf.Empty);
+  rpc StartEval(StartEvalRequest) returns(StartEvalResponse);
+  rpc StopEval(StopEvalRequest) returns(google.protobuf.Empty);
 }

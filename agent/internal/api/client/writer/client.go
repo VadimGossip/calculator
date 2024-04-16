@@ -13,6 +13,8 @@ import (
 type Client interface {
 	Connect() error
 	Disconnect() error
+	StartEval(ctx context.Context, seId int64, agentName string) (*writergrpc.StartEvalResponse, error)
+	StopEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 	Heartbeat(ctx context.Context, agentName string) error
 }
 
@@ -22,6 +24,8 @@ type client struct {
 	host         string
 	port         uint32
 }
+
+var _ Client = (*client)(nil)
 
 func NewClient(host string, port uint32) *client {
 	return &client{host: host, port: port}
@@ -54,6 +58,27 @@ func (c *client) Disconnect() error {
 		return fmt.Errorf("error while disconection grps client %s", err)
 	}
 	return nil
+}
+
+func (c *client) StartEval(ctx context.Context, seId int64, agentName string) (*writergrpc.StartEvalResponse, error) {
+	return c.writerClient.StartEval(ctx, &writergrpc.StartEvalRequest{
+		SeId:  seId,
+		Agent: agentName,
+	})
+}
+
+func (c *client) StopEval(ctx context.Context, seId int64, result *float64, errMsg string) error {
+	req := &writergrpc.StopEvalRequest{
+		SeId:  seId,
+		Error: errMsg,
+	}
+
+	if result != nil {
+		req.Result = *result
+	}
+
+	_, err := c.writerClient.StopEval(ctx, req)
+	return err
 }
 
 func (c *client) Heartbeat(ctx context.Context, agentName string) error {

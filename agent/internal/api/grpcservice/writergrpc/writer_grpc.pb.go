@@ -21,6 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	WriterService_Heartbeat_FullMethodName = "/writer.WriterService/Heartbeat"
+	WriterService_StartEval_FullMethodName = "/writer.WriterService/StartEval"
+	WriterService_StopEval_FullMethodName  = "/writer.WriterService/StopEval"
 )
 
 // WriterServiceClient is the client API for WriterService service.
@@ -28,6 +30,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WriterServiceClient interface {
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	StartEval(ctx context.Context, in *StartEvalRequest, opts ...grpc.CallOption) (*StartEvalResponse, error)
+	StopEval(ctx context.Context, in *StopEvalRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type writerServiceClient struct {
@@ -47,11 +51,31 @@ func (c *writerServiceClient) Heartbeat(ctx context.Context, in *HeartbeatReques
 	return out, nil
 }
 
+func (c *writerServiceClient) StartEval(ctx context.Context, in *StartEvalRequest, opts ...grpc.CallOption) (*StartEvalResponse, error) {
+	out := new(StartEvalResponse)
+	err := c.cc.Invoke(ctx, WriterService_StartEval_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writerServiceClient) StopEval(ctx context.Context, in *StopEvalRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WriterService_StopEval_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WriterServiceServer is the server API for WriterService service.
 // All implementations should embed UnimplementedWriterServiceServer
 // for forward compatibility
 type WriterServiceServer interface {
 	Heartbeat(context.Context, *HeartbeatRequest) (*emptypb.Empty, error)
+	StartEval(context.Context, *StartEvalRequest) (*StartEvalResponse, error)
+	StopEval(context.Context, *StopEvalRequest) (*emptypb.Empty, error)
 }
 
 // UnimplementedWriterServiceServer should be embedded to have forward compatible implementations.
@@ -60,6 +84,12 @@ type UnimplementedWriterServiceServer struct {
 
 func (UnimplementedWriterServiceServer) Heartbeat(context.Context, *HeartbeatRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
+}
+func (UnimplementedWriterServiceServer) StartEval(context.Context, *StartEvalRequest) (*StartEvalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartEval not implemented")
+}
+func (UnimplementedWriterServiceServer) StopEval(context.Context, *StopEvalRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopEval not implemented")
 }
 
 // UnsafeWriterServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -91,6 +121,42 @@ func _WriterService_Heartbeat_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WriterService_StartEval_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartEvalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).StartEval(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_StartEval_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).StartEval(ctx, req.(*StartEvalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriterService_StopEval_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopEvalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).StopEval(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_StopEval_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).StopEval(ctx, req.(*StopEvalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WriterService_ServiceDesc is the grpc.ServiceDesc for WriterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -101,6 +167,14 @@ var WriterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Heartbeat",
 			Handler:    _WriterService_Heartbeat_Handler,
+		},
+		{
+			MethodName: "StartEval",
+			Handler:    _WriterService_StartEval_Handler,
+		},
+		{
+			MethodName: "StopEval",
+			Handler:    _WriterService_StopEval_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

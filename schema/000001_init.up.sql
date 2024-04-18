@@ -1,7 +1,27 @@
 --migrate -path ./schema -database "postgres://postgres:postgres@localhost:5432/calculator_db?sslmode=disable" up
+
+create table users (
+   id            serial not null primary key,
+   login         varchar(255) not null unique,
+   password      varchar(255) not null,
+   admin         boolean default false,
+   registered_at timestamp default now() not null
+);
+
+create table refresh_tokens(
+  id            serial not null unique,
+  user_id       int  not null,
+  token         varchar(255) not null,
+  expires_at    timestamp not null
+);
+
+alter table refresh_tokens add foreign key (user_id) REFERENCES users;
+create index in_refresh_tokens_user_id on refresh_tokens(user_id);
+
 create table expressions
 (
     id               serial    primary key,
+    user_id          int              not null,
     req_uid          varchar(2000)           not null,
     value            varchar(255)            not null,
     result           numeric(50, 5),
@@ -13,6 +33,8 @@ create table expressions
 );
 
 create index in_expressions_req_uid on expressions(req_uid);
+alter table expressions add foreign key (user_id) REFERENCES users;
+create index in_expressions_user_id on expressions(user_id);
 
 create table agents
 (

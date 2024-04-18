@@ -2,12 +2,11 @@ package expression
 
 import (
 	"context"
-	wc "github.com/VadimGossip/calculator/api/internal/api/client/writer"
+	"github.com/VadimGossip/calculator/api/internal/api/client/writer"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/parser"
 	"github.com/VadimGossip/calculator/api/internal/rabbitmq"
 	"github.com/VadimGossip/calculator/api/internal/validation"
-	"github.com/VadimGossip/calculator/api/internal/writer"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -16,8 +15,7 @@ type service struct {
 	cfg               domain.ExpressionCfg
 	parseService      parser.Service
 	validationService validation.Service
-	writerService     writer.Service
-	writerClient      wc.Client
+	writerClient      writer.Client
 	producer          rabbitmq.Producer
 }
 
@@ -33,8 +31,8 @@ type Service interface {
 
 var _ Service = (*service)(nil)
 
-func NewService(cfg domain.ExpressionCfg, parseService parser.Service, validationService validation.Service, writerService writer.Service, writerClient wc.Client, producer rabbitmq.Producer) *service {
-	return &service{cfg: cfg, parseService: parseService, validationService: validationService, writerService: writerService, writerClient: writerClient, producer: producer}
+func NewService(cfg domain.ExpressionCfg, parseService parser.Service, validationService validation.Service, writerClient writer.Client, producer rabbitmq.Producer) *service {
+	return &service{cfg: cfg, parseService: parseService, validationService: validationService, writerClient: writerClient, producer: producer}
 }
 
 func (s *service) prepareSubExpressionQueryData(ctx context.Context, eId *int64) ([]domain.ReadySubExpression, error) {

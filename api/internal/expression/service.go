@@ -125,7 +125,7 @@ func (s *service) GetOperationDurations(ctx context.Context) ([]domain.Operation
 func (s *service) runHungProcessWatcher(ctx context.Context) {
 	logrus.Info("HungProcessWatcher started")
 	defer logrus.Info("HungProcessWatcher stopped")
-	ticker := time.NewTicker(time.Duration(s.cfg.HungCheckPeriod) * time.Minute)
+	ticker := time.NewTicker(time.Duration(s.cfg.HungCheckPeriod) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {

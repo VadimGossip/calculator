@@ -172,14 +172,18 @@ func (c *client) wrapExpression(e *domain.Expression) *writergrpc.Expression {
 }
 
 func (c *client) unwrapExpression(ge *writergrpc.Expression) *domain.Expression {
+	if ge.Id == -1 {
+		return nil
+	}
+
 	var evalStartedAt, evalFinishedAt *time.Time
 	if ge.EvalStartedAt != 0 {
-		evalStartedAtUnix := time.Unix(0, evalStartedAt.Unix())
+		evalStartedAtUnix := time.Unix(ge.EvalStartedAt, 0)
 		evalStartedAt = &evalStartedAtUnix
 	}
 
 	if ge.EvalFinishedAt != 0 {
-		evalFinishedAtUnix := time.Unix(0, evalFinishedAt.Unix())
+		evalFinishedAtUnix := time.Unix(ge.EvalFinishedAt, 0)
 		evalFinishedAt = &evalFinishedAtUnix
 	}
 
@@ -195,7 +199,7 @@ func (c *client) unwrapExpression(ge *writergrpc.Expression) *domain.Expression 
 		Result:         result,
 		State:          ge.State,
 		ErrorMsg:       ge.Error,
-		CreatedAt:      time.Unix(0, ge.CreatedAt),
+		CreatedAt:      time.Unix(ge.CreatedAt, 0),
 		EvalStartedAt:  evalStartedAt,
 		EvalFinishedAt: evalFinishedAt,
 	}
@@ -234,8 +238,8 @@ func (c *client) wrapSubExpression(se *domain.SubExpression) *writergrpc.SubExpr
 func (c *client) unwrapAgent(ga *writergrpc.Agent) *domain.Agent {
 	return &domain.Agent{
 		Name:            ga.Name,
-		CreatedAt:       time.Unix(0, ga.CreatedAt),
-		LastHeartbeatAt: time.Unix(0, ga.LastHbAt),
+		CreatedAt:       time.Unix(ga.CreatedAt, 0),
+		LastHeartbeatAt: time.Unix(ga.LastHbAt, 0),
 	}
 }
 
@@ -243,8 +247,8 @@ func (c *client) unwrapOperationDuration(gd *writergrpc.OperationDuration) *doma
 	return &domain.OperationDuration{
 		Name:      gd.Name,
 		Duration:  gd.Duration,
-		CreatedAt: time.Unix(0, gd.CreatedAt),
-		UpdatedAt: time.Unix(0, gd.UpdatedAt),
+		CreatedAt: time.Unix(gd.CreatedAt, 0),
+		UpdatedAt: time.Unix(gd.UpdatedAt, 0),
 	}
 }
 
@@ -299,9 +303,9 @@ func (c *client) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 	}
 	agents := make([]domain.Agent, len(response.Agents))
 	for i, ga := range response.Agents {
+		fmt.Println(c.unwrapAgent(ga))
 		agents[i] = *c.unwrapAgent(ga)
 	}
-
 	return agents, err
 }
 

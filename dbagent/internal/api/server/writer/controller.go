@@ -6,7 +6,6 @@ import (
 	"github.com/VadimGossip/calculator/dbagent/internal/domain"
 	"github.com/VadimGossip/calculator/dbagent/internal/writer"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"time"
 )
 
 type Controller interface {
@@ -110,7 +109,7 @@ func (c *controller) unwrapSubExpression(gse *writergrpc.SubExpression) *domain.
 
 func (c *controller) wrapExpression(e *domain.Expression) *writergrpc.Expression {
 	if e == nil {
-		return &writergrpc.Expression{}
+		return &writergrpc.Expression{Id: -1}
 	}
 
 	var evalStartedAt, evalFinishedAt int64
@@ -161,15 +160,6 @@ func (c *controller) wrapOperationDuration(d *domain.OperationDuration) *writerg
 		Duration:  d.Duration,
 		CreatedAt: d.CreatedAt.Unix(),
 		UpdatedAt: d.UpdatedAt.Unix(),
-	}
-}
-
-func (c *controller) unwrapOperationDuration(gd *writergrpc.OperationDuration) *domain.OperationDuration {
-	return &domain.OperationDuration{
-		Name:      gd.Name,
-		Duration:  gd.Duration,
-		CreatedAt: time.Unix(0, gd.CreatedAt),
-		UpdatedAt: time.Unix(0, gd.UpdatedAt),
 	}
 }
 

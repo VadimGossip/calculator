@@ -85,7 +85,7 @@ func (r *repository) CreateExpression(ctx context.Context, e *domain.Expression)
 	createStmt := "INSERT INTO expressions(req_uid, value, state, error_msg, created_at)" +
 		"VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at"
 
-	return r.db.QueryRowContext(ctx, createStmt, e.ReqUid, e.Value, e.State, e.ErrorMsg, time.Now()).
+	return r.db.QueryRowContext(ctx, createStmt, e.ReqUid, e.Value, domain.ExpressionStateNew, e.ErrorMsg, time.Now()).
 		Scan(&e.Id, &e.CreatedAt)
 }
 

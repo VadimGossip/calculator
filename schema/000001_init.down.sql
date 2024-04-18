@@ -3,4 +3,4 @@ drop table agents;
 drop table operation_durations;
 drop table expressions;
 drop table refresh_tokens;
-drop table user;
+drop table users;

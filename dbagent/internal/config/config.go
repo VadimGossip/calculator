@@ -3,7 +3,6 @@ package config
 import (
 	"github.com/VadimGossip/calculator/dbagent/internal/domain"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -25,7 +24,7 @@ func setFromEnv(cfg *domain.Config) error {
 }
 
 func unmarshal(cfg *domain.Config) error {
-	if err := viper.UnmarshalKey("app_http", &cfg.AppGrpcServer); err != nil {
+	if err := viper.UnmarshalKey("dbagent_grpc", &cfg.AppGrpcServer); err != nil {
 		return err
 	}
 	return nil
@@ -44,6 +43,5 @@ func Init(configDir string) (*domain.Config, error) {
 	if err := unmarshal(&cfg); err != nil {
 		return nil, err
 	}
-	logrus.Infof("Config: %+v", cfg)
 	return &cfg, nil
 }

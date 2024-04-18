@@ -50,7 +50,7 @@ func (app *App) Run() {
 	app.Factory = newFactory(dbAdapter)
 
 	go func() {
-		app.grpcServer = NewGrpcServer(8085)
+		app.grpcServer = NewGrpcServer(cfg.AppGrpcServer.Port)
 		grpcRouter := initGrpcRouter(app)
 		if err := app.grpcServer.Listen(grpcRouter); err != nil {
 			logrus.Fatalf("Failed to start GRPC server %s", err)

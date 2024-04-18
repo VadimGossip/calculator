@@ -45,9 +45,15 @@ type AgentCfg struct {
 	HeartbeatTimeout int
 }
 
+type DbAgentCfg struct {
+	Host string
+	Port int
+}
+
 type Config struct {
 	Agent            AgentCfg
 	AppHttpServer    NetServerConfig
+	DbAgentGrpc      DbAgentCfg
 	AMPQServerConfig AMPQServerConfig
 	AMPQStructCfg    AMPQStructCfg
 }

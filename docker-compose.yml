@@ -24,18 +24,6 @@ services:
     restart: always
     networks:
       - calculator-network
-  calculator-api:
-    container_name: calculator-api
-    ports:
-      - 8080:8080
-    build:
-      context: .
-      dockerfile: dockerfile-calculator-api
-    restart: always
-    networks:
-      - calculator-network
-    depends_on:
-      - message-broker
   calculator-dbagent:
     container_name: calculator-dbagent
     ports:
@@ -55,6 +43,19 @@ services:
       - calculator-network
     depends_on:
       - postgres
+  calculator-api:
+    container_name: calculator-api
+    ports:
+      - 8080:8080
+    build:
+      context: .
+      dockerfile: dockerfile-calculator-api
+    restart: always
+    networks:
+      - calculator-network
+    depends_on:
+      - message-broker
+      - calculator-dbagent
   calculator-agent1:
     container_name: calculator-agent1
     build:

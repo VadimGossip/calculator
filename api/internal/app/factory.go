@@ -1,7 +1,7 @@
 package app
 
 import (
-	wc "github.com/VadimGossip/calculator/api/internal/api/client/writer"
+	"github.com/VadimGossip/calculator/api/internal/api/client/writer"
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/internal/expression"
 	"github.com/VadimGossip/calculator/api/internal/parser"
@@ -10,7 +10,7 @@ import (
 )
 
 type Factory struct {
-	writerClient wc.Client
+	writerClient writer.Client
 
 	rabbitConn     rabbitmq.Connection
 	rabbitProducer rabbitmq.Producer
@@ -29,7 +29,7 @@ func newFactory(cfg *domain.Config) *Factory {
 	factory.rabbitProducer = rabbitmq.NewProducer(cfg.AMPQStructCfg, factory.rabbitConn)
 	factory.rabbitService = rabbitmq.NewService(factory.rabbitConn)
 
-	factory.writerClient = wc.NewClient("calculator-dbagent", 8085) //cfg
+	factory.writerClient = writer.NewClient(cfg.DbAgentGrpc.Host, cfg.DbAgentGrpc.Port)
 	factory.parseService = parser.NewService()
 	factory.validationService = validation.NewService(cfg.Expression.MaxLength)
 	factory.expressionService = expression.NewService(cfg.Expression, factory.parseService, factory.validationService, factory.writerClient, factory.rabbitProducer)

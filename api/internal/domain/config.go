@@ -39,6 +39,11 @@ type AMPQStructCfg struct {
 	ConsumerCfg   ConsumerCfg `mapstructure:"consumer"`
 }
 
+type DbAgentCfg struct {
+	Host string
+	Port int
+}
+
 type ExpressionCfg struct {
 	MaxLength            int
 	HungTimeout          int
@@ -50,6 +55,7 @@ type ExpressionCfg struct {
 type Config struct {
 	Expression       ExpressionCfg
 	AppHttpServer    NetServerConfig
+	DbAgentGrpc      DbAgentCfg
 	AMPQServerConfig AMPQServerConfig
 	AMPQStructCfg    AMPQStructCfg
 }

@@ -41,6 +41,7 @@ func (app *App) Run() {
 		logrus.Fatalf("Config initialization error %s", err)
 	}
 	app.cfg = cfg
+	logrus.Infof("[%s] got config: [%+v]", app.name, app.cfg)
 
 	app.Factory = newFactory(app.cfg)
 

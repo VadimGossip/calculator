@@ -23,7 +23,7 @@ func newFactory(cfg *domain.Config) *Factory {
 	factory.rabbitConn = rabbitmq.NewConnection(cfg.AMPQServerConfig.Url)
 	factory.rabbitService = rabbitmq.NewService(factory.rabbitConn)
 
-	factory.writerClient = writer.NewClient("calculator-dbagent", 8085) //cfg
+	factory.writerClient = writer.NewClient(cfg.DbAgentGrpc.Host, cfg.DbAgentGrpc.Port)
 
 	factory.workerService = worker.NewService(cfg.Agent, factory.writerClient)
 	factory.rabbitConsumer = rabbitmq.NewConsumer(cfg.AMPQStructCfg, factory.rabbitConn, factory.workerService)

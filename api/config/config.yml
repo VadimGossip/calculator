@@ -1,5 +1,8 @@
 app_http:
      port: 8080 #api server port
+dbagent_grpc:
+  host: "calculator-dbagent"
+  port: 8085
 expression:
   maxLength:  50 #max allowed length of expression
   hungTimeout: 300 #in sec if subtask will not evaluate after taken by agent in that period, her evaluation started and agent field will be cleared to allow another agent to take it

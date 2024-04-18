@@ -1,2 +1,2 @@
-app_http:
-     port: 8080 #api server port
+dbagent_grpc:
+  port: 8085

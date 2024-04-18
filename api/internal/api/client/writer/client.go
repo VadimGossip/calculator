@@ -33,12 +33,12 @@ type client struct {
 	writerClient writergrpc.WriterServiceClient
 	conn         *grpc.ClientConn
 	host         string
-	port         uint32
+	port         int
 }
 
 var _ Client = (*client)(nil)
 
-func NewClient(host string, port uint32) *client {
+func NewClient(host string, port int) *client {
 	return &client{host: host, port: port}
 }
 

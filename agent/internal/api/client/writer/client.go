@@ -14,7 +14,7 @@ type Client interface {
 	Connect() error
 	Disconnect() error
 	Heartbeat(ctx context.Context, agentName string) error
-	StartEval(ctx context.Context, seId int64, agentName string) (*writergrpc.StartEvalResponse, error)
+	StartEval(ctx context.Context, seId int64, agentName string) (bool, error)
 	StopEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 }
 
@@ -65,11 +65,16 @@ func (c *client) Heartbeat(ctx context.Context, agentName string) error {
 	return err
 }
 
-func (c *client) StartEval(ctx context.Context, seId int64, agentName string) (*writergrpc.StartEvalResponse, error) {
-	return c.writerClient.StartEval(ctx, &writergrpc.StartEvalRequest{
+func (c *client) StartEval(ctx context.Context, seId int64, agentName string) (bool, error) {
+	response, err := c.writerClient.StartEval(ctx, &writergrpc.StartEvalRequest{
 		SeId:  seId,
 		Agent: agentName,
 	})
+	if err != nil {
+		return false, err
+	}
+
+	return response.Success, nil
 }
 
 func (c *client) StopEval(ctx context.Context, seId int64, result *float64, errMsg string) error {

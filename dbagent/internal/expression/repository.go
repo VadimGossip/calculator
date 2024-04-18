@@ -20,8 +20,8 @@ type Repository interface {
 	SetAgentHeartbeatAt(ctx context.Context, name string) (bool, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	GetOperationDuration(ctx context.Context, name string) (domain.OperationDuration, error)
-	CreateOperationDuration(ctx context.Context, name string, duration uint16) error
-	UpdateOperationDuration(ctx context.Context, name string, duration uint16) (bool, error)
+	CreateOperationDuration(ctx context.Context, name string, duration uint32) error
+	UpdateOperationDuration(ctx context.Context, name string, duration uint32) (bool, error)
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, s *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
@@ -277,7 +277,7 @@ func (r *repository) GetOperationDuration(ctx context.Context, name string) (dom
 	return d, r.db.QueryRowContext(ctx, selectStmt, name).Scan(&d.Name, &d.Duration, &d.CreatedAt, &d.UpdatedAt)
 }
 
-func (r *repository) CreateOperationDuration(ctx context.Context, name string, duration uint16) error {
+func (r *repository) CreateOperationDuration(ctx context.Context, name string, duration uint32) error {
 	createStmt := `INSERT 
                      INTO operation_durations(operation_name, duration, created_at, updated_at)
 		           VALUES ($1, $2, $3, $4);`
@@ -289,7 +289,7 @@ func (r *repository) CreateOperationDuration(ctx context.Context, name string, d
 	return nil
 }
 
-func (r *repository) UpdateOperationDuration(ctx context.Context, name string, duration uint16) (bool, error) {
+func (r *repository) UpdateOperationDuration(ctx context.Context, name string, duration uint32) (bool, error) {
 	updStmt := `UPDATE operation_durations 
                    SET duration = $1
                       ,updated_at = $2

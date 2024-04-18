@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/VadimGossip/calculator/dbagent/internal/domain"
-	"github.com/VadimGossip/calculator/dbagent/internal/writer"
-
+	"github.com/VadimGossip/calculator/dbagent/internal/expression"
+	"github.com/VadimGossip/calculator/dbagent/internal/token"
+	"github.com/VadimGossip/calculator/dbagent/internal/user"
 	_ "github.com/lib/pq"
 )
 
@@ -13,7 +14,9 @@ type DBAdapter struct {
 	cfg domain.DbCfg
 	db  *sql.DB
 
-	writerRepo writer.Repository
+	exprRepo  expression.Repository
+	userRepo  user.Repository
+	tokenRepo token.Repository
 }
 
 func NewDBAdapter(cfg domain.DbCfg) *DBAdapter {
@@ -31,7 +34,9 @@ func (d *DBAdapter) Connect() error {
 	}
 
 	d.db = db
-	d.writerRepo = writer.NewRepository(db)
+	d.exprRepo = expression.NewRepository(db)
+	d.userRepo = user.NewRepository(db)
+	d.tokenRepo = token.NewRepository(db)
 	return nil
 }
 

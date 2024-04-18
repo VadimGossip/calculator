@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/VadimGossip/calculator/dbagent/internal/domain"
+	"github.com/VadimGossip/calculator/api/internal/domain"
 	"time"
 )
 

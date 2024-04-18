@@ -24,7 +24,7 @@ type Service interface {
 	RegisterExpression(ctx context.Context, e *domain.Expression) error
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
-	SaveOperationDurations(ctx context.Context, data map[string]uint16) error
+	SaveOperationDurations(ctx context.Context, data map[string]uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	RunProcessWatchers(ctx context.Context)
 }
@@ -61,7 +61,7 @@ func (s *service) ValidateAndSimplify(value string) (string, error) {
 }
 
 func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) error {
-	existing, err := s.writerService.GetExpressionByReqUid(ctx, e.ReqUid)
+	existing, err := s.writerClient.GetExpressionByReqUid(ctx, e.ReqUid)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,8 @@ func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) 
 		return nil
 	}
 
-	if err = s.writerService.CreateExpression(ctx, e); err != nil {
+	_, err = s.writerClient.CreateExpression(ctx, e)
+	if err != nil {
 		return err
 	}
 
@@ -88,10 +89,10 @@ func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) 
 					enrichedSe.SubExpressionId2 = &val
 				}
 			}
-			if err = s.writerService.CreateSubExpression(ctx, &enrichedSe); err != nil {
+			idDict[se.Id], err = s.writerClient.CreateSubExpression(ctx, &enrichedSe)
+			if err != nil {
 				return err
 			}
-			idDict[se.Id] = enrichedSe.Id
 		}
 		if err = s.prepareAndPublish(ctx, &e.Id); err != nil {
 			return err
@@ -101,16 +102,16 @@ func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) 
 }
 
 func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
-	return s.writerService.GetExpressions(ctx)
+	return s.writerClient.GetExpressions(ctx)
 }
 
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
-	return s.writerService.GetAgents(ctx)
+	return s.writerClient.GetAgents(ctx)
 }
 
-func (s *service) SaveOperationDurations(ctx context.Context, data map[string]uint16) error {
+func (s *service) SaveOperationDurations(ctx context.Context, data map[string]uint32) error {
 	for key, value := range data {
-		if err := s.writerService.SaveOperationDuration(ctx, key, value); err != nil {
+		if err := s.writerClient.SaveOperationDuration(ctx, key, value); err != nil {
 			return err
 		}
 	}
@@ -118,7 +119,7 @@ func (s *service) SaveOperationDurations(ctx context.Context, data map[string]ui
 }
 
 func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {
-	return s.writerService.GetOperationDurations(ctx)
+	return s.writerClient.GetOperationDurations(ctx)
 }
 
 func (s *service) runHungProcessWatcher(ctx context.Context) {
@@ -140,7 +141,7 @@ func (s *service) runHungProcessWatcher(ctx context.Context) {
 }
 
 func (s *service) checkAgents(ctx context.Context) error {
-	agents, err := s.writerService.GetAgents(ctx)
+	agents, err := s.writerClient.GetAgents(ctx)
 	if err != nil {
 		return err
 	}
@@ -148,7 +149,7 @@ func (s *service) checkAgents(ctx context.Context) error {
 		tp := time.Since(agent.LastHeartbeatAt)
 		if tp > time.Duration(s.cfg.AgentDownTimeout)*time.Minute {
 			logrus.Infof("Agent %s Last HeartBeatAt %s TimePassed %s Allowed %s. All Agent Task will be skipped.", agent.Name, agent.LastHeartbeatAt, tp, time.Duration(s.cfg.AgentDownTimeout)*time.Minute)
-			return s.writerService.SkipAgentSubExpressions(ctx, agent.Name)
+			return s.writerClient.SkipAgentSubExpressions(ctx, agent.Name)
 		}
 	}
 	return nil

@@ -6,6 +6,30 @@ package writer;
 
 option go_package = "github.com/VadimGossip/calculator/dbagent/api/grpcservice/writergrpc";
 
+message Expression {
+  int64 id = 1;
+  string reqUid = 2;
+  string value = 3;
+  double result = 4;
+  string state = 5;
+  string error = 6;
+  int64 createdAt = 7;
+  int64 evalStartedAt = 8;
+  int64 evalFinishedAt =9;
+}
+
+message SubExpression {
+  int64 Id  = 1;
+  int64 expressionId = 2;
+  double val1 = 3;
+  double val2 = 4;
+  int64 subExpressionId1 = 5;
+  int64 subExpressionId2 = 6;
+  string operation = 7;
+  uint32 operationDuration = 8;
+  bool isLast = 9;
+}
+
 message HeartbeatRequest {
   string agentName = 1;
 }
@@ -26,38 +50,16 @@ message StopEvalRequest {
 }
 
 message ReadySubExpressionsRequest {
-  int64 seId = 1;
-  bool seIsValid = 2;
-  uint32 skipTimeoutSec = 3;
-}
-
-message SubExpression {
-  int64 seId = 1;
-  double val1 = 2;
-  double val2 = 3;
-  string operation = 4;
-  uint32 operationDuration = 5;
-  bool isLast = 6;
+  int64 eId = 1;
+  uint32 skipTimeoutSec = 2;
 }
 
 message ReadySubExpressionsResponse {
-  repeated SubExpression subExpressions = 1;
+  repeated SubExpression SubExpressions = 1;
 }
 
 message ExpressionByReqUidRequest {
   string reqUid = 1;
-}
-
-message Expression {
-  int64 id = 1;
-  string reqUid = 2;
-  string value = 3;
-  double result = 4;
-  string state = 5;
-  string error = 6;
-  int64 createdAt = 7;
-  int64 evalStartedAt = 8;
-  int64 evalFinishedAt =9;
 }
 
 message CreateExpressionRequest {
@@ -65,7 +67,7 @@ message CreateExpressionRequest {
 }
 
 message CreateExpressionResponse {
-  int64 eId =1;
+  int64 id =1;
 }
 
 message CreateSubExpressionRequest{
@@ -73,7 +75,7 @@ message CreateSubExpressionRequest{
 }
 
 message CreateSubExpressionResponse {
-  int64 seId = 1;
+  int64 id = 1;
 }
 
 message GetExpressionsResponse {
@@ -106,6 +108,10 @@ message GetOperDurResponse {
   repeated OperationDuration operationDurations = 1;
 }
 
+message SkipAgentSubExpressionsRequest {
+  string agentName = 1;
+}
+
 service WriterService {
   rpc Heartbeat(HeartbeatRequest) returns(google.protobuf.Empty);
   rpc StartEval(StartEvalRequest) returns(StartEvalResponse);
@@ -116,6 +122,7 @@ service WriterService {
   rpc CreateSubExpression(CreateSubExpressionRequest) returns(CreateSubExpressionResponse);
   rpc GetExpressions(google.protobuf.Empty) returns(GetExpressionsResponse);
   rpc GetAgents(google.protobuf.Empty) returns(GetAgentsResponse);
-  rpc SaveOperationDuration(CreateExpressionRequest) returns(google.protobuf.Empty);
+  rpc SaveOperationDuration(CreateOperDurRequest) returns(google.protobuf.Empty);
   rpc GetOperationDurations(google.protobuf.Empty) returns(GetOperDurResponse);
+  rpc SkipAgentSubExpressions(SkipAgentSubExpressionsRequest) returns(google.protobuf.Empty);
 }

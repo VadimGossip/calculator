@@ -54,13 +54,13 @@ func (s *service) eval(item domain.ReadySubExpression) (*float64, error) {
 }
 
 func (s *service) Do(ctx context.Context, item domain.ReadySubExpression) error {
-	startResp, err := s.writerClient.StartEval(ctx, item.Id, s.cfg.Name)
+	success, err := s.writerClient.StartEval(ctx, item.Id, s.cfg.Name)
 	if err != nil {
 		logrus.Errorf("Received error on start eval %s", err)
 		return err
 	}
 
-	if !startResp.Success {
+	if !success {
 		logrus.Infof("Failed to start eval attempt startResp.Success = false")
 		return nil
 	}

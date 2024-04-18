@@ -20,17 +20,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	WriterService_Heartbeat_FullMethodName              = "/writer.WriterService/Heartbeat"
-	WriterService_StartEval_FullMethodName              = "/writer.WriterService/StartEval"
-	WriterService_StopEval_FullMethodName               = "/writer.WriterService/StopEval"
-	WriterService_GetReadySubExpressions_FullMethodName = "/writer.WriterService/GetReadySubExpressions"
-	WriterService_GetExpressionByReqUid_FullMethodName  = "/writer.WriterService/GetExpressionByReqUid"
-	WriterService_CreateExpression_FullMethodName       = "/writer.WriterService/CreateExpression"
-	WriterService_CreateSubExpression_FullMethodName    = "/writer.WriterService/CreateSubExpression"
-	WriterService_GetExpressions_FullMethodName         = "/writer.WriterService/GetExpressions"
-	WriterService_GetAgents_FullMethodName              = "/writer.WriterService/GetAgents"
-	WriterService_SaveOperationDuration_FullMethodName  = "/writer.WriterService/SaveOperationDuration"
-	WriterService_GetOperationDurations_FullMethodName  = "/writer.WriterService/GetOperationDurations"
+	WriterService_Heartbeat_FullMethodName               = "/writer.WriterService/Heartbeat"
+	WriterService_StartEval_FullMethodName               = "/writer.WriterService/StartEval"
+	WriterService_StopEval_FullMethodName                = "/writer.WriterService/StopEval"
+	WriterService_GetReadySubExpressions_FullMethodName  = "/writer.WriterService/GetReadySubExpressions"
+	WriterService_GetExpressionByReqUid_FullMethodName   = "/writer.WriterService/GetExpressionByReqUid"
+	WriterService_CreateExpression_FullMethodName        = "/writer.WriterService/CreateExpression"
+	WriterService_CreateSubExpression_FullMethodName     = "/writer.WriterService/CreateSubExpression"
+	WriterService_GetExpressions_FullMethodName          = "/writer.WriterService/GetExpressions"
+	WriterService_GetAgents_FullMethodName               = "/writer.WriterService/GetAgents"
+	WriterService_SaveOperationDuration_FullMethodName   = "/writer.WriterService/SaveOperationDuration"
+	WriterService_GetOperationDurations_FullMethodName   = "/writer.WriterService/GetOperationDurations"
+	WriterService_SkipAgentSubExpressions_FullMethodName = "/writer.WriterService/SkipAgentSubExpressions"
 )
 
 // WriterServiceClient is the client API for WriterService service.
@@ -46,8 +47,9 @@ type WriterServiceClient interface {
 	CreateSubExpression(ctx context.Context, in *CreateSubExpressionRequest, opts ...grpc.CallOption) (*CreateSubExpressionResponse, error)
 	GetExpressions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetExpressionsResponse, error)
 	GetAgents(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAgentsResponse, error)
-	SaveOperationDuration(ctx context.Context, in *CreateExpressionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	SaveOperationDuration(ctx context.Context, in *CreateOperDurRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOperationDurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOperDurResponse, error)
+	SkipAgentSubExpressions(ctx context.Context, in *SkipAgentSubExpressionsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type writerServiceClient struct {
@@ -139,7 +141,7 @@ func (c *writerServiceClient) GetAgents(ctx context.Context, in *emptypb.Empty, 
 	return out, nil
 }
 
-func (c *writerServiceClient) SaveOperationDuration(ctx context.Context, in *CreateExpressionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *writerServiceClient) SaveOperationDuration(ctx context.Context, in *CreateOperDurRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, WriterService_SaveOperationDuration_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -151,6 +153,15 @@ func (c *writerServiceClient) SaveOperationDuration(ctx context.Context, in *Cre
 func (c *writerServiceClient) GetOperationDurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOperDurResponse, error) {
 	out := new(GetOperDurResponse)
 	err := c.cc.Invoke(ctx, WriterService_GetOperationDurations_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writerServiceClient) SkipAgentSubExpressions(ctx context.Context, in *SkipAgentSubExpressionsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, WriterService_SkipAgentSubExpressions_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +181,9 @@ type WriterServiceServer interface {
 	CreateSubExpression(context.Context, *CreateSubExpressionRequest) (*CreateSubExpressionResponse, error)
 	GetExpressions(context.Context, *emptypb.Empty) (*GetExpressionsResponse, error)
 	GetAgents(context.Context, *emptypb.Empty) (*GetAgentsResponse, error)
-	SaveOperationDuration(context.Context, *CreateExpressionRequest) (*emptypb.Empty, error)
+	SaveOperationDuration(context.Context, *CreateOperDurRequest) (*emptypb.Empty, error)
 	GetOperationDurations(context.Context, *emptypb.Empty) (*GetOperDurResponse, error)
+	SkipAgentSubExpressions(context.Context, *SkipAgentSubExpressionsRequest) (*emptypb.Empty, error)
 }
 
 // UnimplementedWriterServiceServer should be embedded to have forward compatible implementations.
@@ -205,11 +217,14 @@ func (UnimplementedWriterServiceServer) GetExpressions(context.Context, *emptypb
 func (UnimplementedWriterServiceServer) GetAgents(context.Context, *emptypb.Empty) (*GetAgentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAgents not implemented")
 }
-func (UnimplementedWriterServiceServer) SaveOperationDuration(context.Context, *CreateExpressionRequest) (*emptypb.Empty, error) {
+func (UnimplementedWriterServiceServer) SaveOperationDuration(context.Context, *CreateOperDurRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveOperationDuration not implemented")
 }
 func (UnimplementedWriterServiceServer) GetOperationDurations(context.Context, *emptypb.Empty) (*GetOperDurResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOperationDurations not implemented")
+}
+func (UnimplementedWriterServiceServer) SkipAgentSubExpressions(context.Context, *SkipAgentSubExpressionsRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SkipAgentSubExpressions not implemented")
 }
 
 // UnsafeWriterServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -386,7 +401,7 @@ func _WriterService_GetAgents_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _WriterService_SaveOperationDuration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateExpressionRequest)
+	in := new(CreateOperDurRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -398,7 +413,7 @@ func _WriterService_SaveOperationDuration_Handler(srv interface{}, ctx context.C
 		FullMethod: WriterService_SaveOperationDuration_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WriterServiceServer).SaveOperationDuration(ctx, req.(*CreateExpressionRequest))
+		return srv.(WriterServiceServer).SaveOperationDuration(ctx, req.(*CreateOperDurRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -417,6 +432,24 @@ func _WriterService_GetOperationDurations_Handler(srv interface{}, ctx context.C
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WriterServiceServer).GetOperationDurations(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriterService_SkipAgentSubExpressions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SkipAgentSubExpressionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).SkipAgentSubExpressions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_SkipAgentSubExpressions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).SkipAgentSubExpressions(ctx, req.(*SkipAgentSubExpressionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -471,6 +504,10 @@ var WriterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOperationDurations",
 			Handler:    _WriterService_GetOperationDurations_Handler,
+		},
+		{
+			MethodName: "SkipAgentSubExpressions",
+			Handler:    _WriterService_SkipAgentSubExpressions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

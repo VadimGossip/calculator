@@ -24,8 +24,9 @@ type Service interface {
 	CreateSubExpression(ctx context.Context, se *domain.SubExpression) error
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
-	SaveOperationDuration(ctx context.Context, name string, duration uint16) error
+	SaveOperationDuration(ctx context.Context, name string, duration uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
+	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
 
 var _ Service = (*service)(nil)
@@ -70,10 +71,14 @@ func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 	return s.exprService.GetAgents(ctx)
 }
 
-func (s *service) SaveOperationDuration(ctx context.Context, name string, duration uint16) error {
+func (s *service) SaveOperationDuration(ctx context.Context, name string, duration uint32) error {
 	return s.exprService.SaveOperationDuration(ctx, name, duration)
 }
 
 func (s *service) GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error) {
 	return s.exprService.GetOperationDurations(ctx)
+}
+
+func (s *service) SkipAgentSubExpressions(ctx context.Context, agent string) error {
+	return s.exprService.SkipAgentSubExpressions(ctx, agent)
 }

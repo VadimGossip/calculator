@@ -18,7 +18,7 @@ type Service interface {
 	GetExpressions(ctx context.Context) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
-	SaveOperationDuration(ctx context.Context, name string, duration uint16) error
+	SaveOperationDuration(ctx context.Context, name string, duration uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	CreateSubExpression(ctx context.Context, se *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
@@ -72,7 +72,7 @@ func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 	return s.repo.GetAgents(ctx)
 }
 
-func (s *service) SaveOperationDuration(ctx context.Context, name string, duration uint16) error {
+func (s *service) SaveOperationDuration(ctx context.Context, name string, duration uint32) error {
 	success, err := s.repo.UpdateOperationDuration(ctx, name, duration)
 	if err != nil {
 		return err

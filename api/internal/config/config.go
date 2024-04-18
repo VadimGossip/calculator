@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -18,9 +17,9 @@ func parseConfigFile(configDir string) error {
 }
 
 func setFromEnv(cfg *domain.Config) error {
-	if err := envconfig.Process("db", &cfg.Db); err != nil {
-		return err
-	}
+	//if err := envconfig.Process("db", &cfg.Db); err != nil {
+	//	return err
+	//}
 	return nil
 }
 

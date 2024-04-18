@@ -89,7 +89,7 @@ func (ctrl *controller) GetAllAgents(c *gin.Context) {
 }
 
 func (ctrl *controller) SaveOperationDurations(c *gin.Context) {
-	operationDurations := make(map[string]uint16)
+	operationDurations := make(map[string]uint32)
 	if err := c.BindJSON(&operationDurations); err != nil {
 		errMsg := fmt.Sprintf("Parse request error: %s", err)
 		logrus.WithFields(logrus.Fields{

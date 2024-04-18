@@ -3,7 +3,7 @@ package token
 import (
 	"context"
 	"database/sql"
-	"github.com/VadimGossip/calculator/dbagent/internal/domain"
+	"github.com/VadimGossip/calculator/api/internal/domain"
 )
 
 type Repository interface {

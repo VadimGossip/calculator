@@ -27,6 +27,10 @@ type Service interface {
 	SaveOperationDuration(ctx context.Context, name string, duration uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
+	CreateUser(ctx context.Context, user *domain.User) error
+	GetUserByCredentials(ctx context.Context, login string, password string) (*domain.User, error)
+	CreateToken(ctx context.Context, token *domain.Token) error
+	GetToken(ctx context.Context, token string) (*domain.Token, error)
 }
 
 var _ Service = (*service)(nil)
@@ -81,4 +85,20 @@ func (s *service) GetOperationDurations(ctx context.Context) ([]domain.Operation
 
 func (s *service) SkipAgentSubExpressions(ctx context.Context, agent string) error {
 	return s.exprService.SkipAgentSubExpressions(ctx, agent)
+}
+
+func (s *service) CreateUser(ctx context.Context, user *domain.User) error {
+	return s.userService.Create(ctx, user)
+}
+
+func (s *service) GetUserByCredentials(ctx context.Context, login, password string) (*domain.User, error) {
+	return s.userService.GetByCredentials(ctx, login, password)
+}
+
+func (s *service) CreateToken(ctx context.Context, token *domain.Token) error {
+	return s.tokenService.Create(ctx, token)
+}
+
+func (s *service) GetToken(ctx context.Context, token string) (*domain.Token, error) {
+	return s.tokenService.Get(ctx, token)
 }

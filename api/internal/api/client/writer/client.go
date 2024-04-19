@@ -332,3 +332,72 @@ func (c *client) SkipAgentSubExpressions(ctx context.Context, agentName string) 
 	_, err := c.writerClient.SkipAgentSubExpressions(ctx, req)
 	return err
 }
+
+func (c *client) CreateUser(ctx context.Context, user *domain.User) error {
+	req := &writergrpc.CreateUserRequest{
+		Login:    user.Login,
+		Password: user.Password,
+		Admin:    user.Admin,
+	}
+	response, err := c.writerClient.CreateUser(ctx, req)
+	if err != nil {
+		return err
+	}
+	user.Id = response.Id
+	user.RegisteredAt = time.Unix(response.RegisteredAt, 0)
+	return nil
+}
+
+func (c *client) unwrapUser(gu *writergrpc.User) *domain.User {
+	return &domain.User{
+		Id:           gu.Id,
+		Login:        gu.Login,
+		Password:     gu.Password,
+		Admin:        gu.Admin,
+		RegisteredAt: time.Unix(gu.RegisteredAt, 0),
+	}
+}
+
+func (c *client) GetUserByCredentials(ctx context.Context, login, password string) (*domain.User, error) {
+	req := &writergrpc.GetUserByCredRequest{
+		Login:    login,
+		Password: password,
+	}
+	response, err := c.writerClient.GetUserByCred(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return c.unwrapUser(response.User), nil
+}
+
+func (c *client) CreateToken(ctx context.Context, token *domain.Token) error {
+	req := &writergrpc.CreateTokenRequest{
+		UserId:    token.UserId,
+		Token:     token.Token,
+		ExpiresAt: token.ExpiresAt.Unix(),
+	}
+	response, err := c.writerClient.CreateToken(ctx, req)
+	if err != nil {
+		return err
+	}
+	token.Id = response.Token.Id
+	return nil
+}
+
+func (c *client) unwrapToken(gt *writergrpc.Token) *domain.Token {
+	return &domain.Token{
+		Id:        gt.Id,
+		UserId:    gt.UserId,
+		Token:     gt.Token,
+		ExpiresAt: time.Unix(gt.ExpiresAt, 0),
+	}
+}
+
+func (c *client) GetToken(ctx context.Context, tokenValue string) (*domain.Token, error) {
+	req := &writergrpc.GetTokenRequest{TokenValue: tokenValue}
+	response, err := c.writerClient.GetToken(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return c.unwrapToken(response.Token), nil
+}

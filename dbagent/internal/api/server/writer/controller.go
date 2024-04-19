@@ -6,6 +6,7 @@ import (
 	"github.com/VadimGossip/calculator/dbagent/internal/domain"
 	"github.com/VadimGossip/calculator/dbagent/internal/writer"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"time"
 )
 
 type Controller interface {
@@ -196,9 +197,9 @@ func (c *controller) CreateExpression(ctx context.Context, req *writergrpc.Creat
 	return &writergrpc.CreateExpressionResponse{Id: e.Id}, nil
 }
 
-func (c *controller) CreateSubExpression(cxt context.Context, req *writergrpc.CreateSubExpressionRequest) (*writergrpc.CreateSubExpressionResponse, error) {
+func (c *controller) CreateSubExpression(ctx context.Context, req *writergrpc.CreateSubExpressionRequest) (*writergrpc.CreateSubExpressionResponse, error) {
 	se := c.unwrapSubExpression(req.Se)
-	if err := c.writer.CreateSubExpression(cxt, se); err != nil {
+	if err := c.writer.CreateSubExpression(ctx, se); err != nil {
 		return &writergrpc.CreateSubExpressionResponse{}, err
 	}
 
@@ -253,4 +254,63 @@ func (c *controller) GetOperationDurations(ctx context.Context, _ *emptypb.Empty
 
 func (c *controller) SkipAgentSubExpressions(ctx context.Context, req *writergrpc.SkipAgentSubExpressionsRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, c.writer.SkipAgentSubExpressions(ctx, req.AgentName)
+}
+
+func wrapUser(u *domain.User) *writergrpc.User {
+	return &writergrpc.User{
+		Id:           u.Id,
+		Login:        u.Login,
+		Password:     u.Password,
+		Admin:        u.Admin,
+		RegisteredAt: u.RegisteredAt.Unix(),
+	}
+}
+
+func (c *controller) CreateUser(ctx context.Context, req *writergrpc.CreateUserRequest) (*writergrpc.CreateUserResponse, error) {
+	u := &domain.User{
+		Login:    req.Login,
+		Password: req.Password,
+		Admin:    req.Admin,
+	}
+	if err := c.writer.CreateUser(ctx, u); err != nil {
+		return &writergrpc.CreateUserResponse{}, err
+	}
+	return &writergrpc.CreateUserResponse{User: wrapUser(u)}, nil
+}
+
+func (c *controller) GetUserByCred(ctx context.Context, req *writergrpc.GetUserByCredRequest) (*writergrpc.GetUserByCredResponse, error) {
+	u, err := c.writer.GetUserByCredentials(ctx, req.Login, req.Password)
+	if err != nil {
+		return &writergrpc.GetUserByCredResponse{}, err
+	}
+	return &writergrpc.GetUserByCredResponse{User: wrapUser(u)}, nil
+}
+
+func wrapToken(t *domain.Token) *writergrpc.Token {
+	return &writergrpc.Token{
+		Id:        t.Id,
+		UserId:    t.UserId,
+		Token:     t.Token,
+		ExpiresAt: t.ExpiresAt.Unix(),
+	}
+}
+
+func (c *controller) CreateToken(ctx context.Context, req *writergrpc.CreateTokenRequest) (*writergrpc.CreateTokenResponse, error) {
+	t := &domain.Token{
+		UserId:    req.UserId,
+		Token:     req.Token,
+		ExpiresAt: time.Unix(req.ExpiresAt, 0),
+	}
+	if err := c.writer.CreateToken(ctx, t); err != nil {
+		return &writergrpc.CreateTokenResponse{}, err
+	}
+	return &writergrpc.CreateTokenResponse{Token: wrapToken(t)}, nil
+}
+
+func (c *controller) GetUserToken(ctx context.Context, req *writergrpc.GetTokenRequest) (*writergrpc.GetTokenResponse, error) {
+	t, err := c.writer.GetToken(ctx, req.TokenValue)
+	if err != nil {
+		return &writergrpc.GetTokenResponse{}, err
+	}
+	return &writergrpc.GetTokenResponse{Token: wrapToken(t)}, nil
 }

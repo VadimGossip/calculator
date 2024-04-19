@@ -32,6 +32,10 @@ const (
 	WriterService_SaveOperationDuration_FullMethodName   = "/writer.WriterService/SaveOperationDuration"
 	WriterService_GetOperationDurations_FullMethodName   = "/writer.WriterService/GetOperationDurations"
 	WriterService_SkipAgentSubExpressions_FullMethodName = "/writer.WriterService/SkipAgentSubExpressions"
+	WriterService_CreateUser_FullMethodName              = "/writer.WriterService/CreateUser"
+	WriterService_GetUserByCred_FullMethodName           = "/writer.WriterService/GetUserByCred"
+	WriterService_CreateToken_FullMethodName             = "/writer.WriterService/CreateToken"
+	WriterService_GetToken_FullMethodName                = "/writer.WriterService/GetToken"
 )
 
 // WriterServiceClient is the client API for WriterService service.
@@ -50,6 +54,10 @@ type WriterServiceClient interface {
 	SaveOperationDuration(ctx context.Context, in *CreateOperDurRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOperationDurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOperDurResponse, error)
 	SkipAgentSubExpressions(ctx context.Context, in *SkipAgentSubExpressionsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error)
+	GetUserByCred(ctx context.Context, in *GetUserByCredRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
+	CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error)
+	GetToken(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*GetTokenResponse, error)
 }
 
 type writerServiceClient struct {
@@ -168,6 +176,42 @@ func (c *writerServiceClient) SkipAgentSubExpressions(ctx context.Context, in *S
 	return out, nil
 }
 
+func (c *writerServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := c.cc.Invoke(ctx, WriterService_CreateUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writerServiceClient) GetUserByCred(ctx context.Context, in *GetUserByCredRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
+	out := new(CreateUserResponse)
+	err := c.cc.Invoke(ctx, WriterService_GetUserByCred_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writerServiceClient) CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error) {
+	out := new(CreateTokenResponse)
+	err := c.cc.Invoke(ctx, WriterService_CreateToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writerServiceClient) GetToken(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*GetTokenResponse, error) {
+	out := new(GetTokenResponse)
+	err := c.cc.Invoke(ctx, WriterService_GetToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WriterServiceServer is the server API for WriterService service.
 // All implementations should embed UnimplementedWriterServiceServer
 // for forward compatibility
@@ -184,6 +228,10 @@ type WriterServiceServer interface {
 	SaveOperationDuration(context.Context, *CreateOperDurRequest) (*emptypb.Empty, error)
 	GetOperationDurations(context.Context, *emptypb.Empty) (*GetOperDurResponse, error)
 	SkipAgentSubExpressions(context.Context, *SkipAgentSubExpressionsRequest) (*emptypb.Empty, error)
+	CreateUser(context.Context, *CreateUserRequest) (*User, error)
+	GetUserByCred(context.Context, *GetUserByCredRequest) (*CreateUserResponse, error)
+	CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error)
+	GetToken(context.Context, *GetTokenRequest) (*GetTokenResponse, error)
 }
 
 // UnimplementedWriterServiceServer should be embedded to have forward compatible implementations.
@@ -225,6 +273,18 @@ func (UnimplementedWriterServiceServer) GetOperationDurations(context.Context, *
 }
 func (UnimplementedWriterServiceServer) SkipAgentSubExpressions(context.Context, *SkipAgentSubExpressionsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SkipAgentSubExpressions not implemented")
+}
+func (UnimplementedWriterServiceServer) CreateUser(context.Context, *CreateUserRequest) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+}
+func (UnimplementedWriterServiceServer) GetUserByCred(context.Context, *GetUserByCredRequest) (*CreateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserByCred not implemented")
+}
+func (UnimplementedWriterServiceServer) CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateToken not implemented")
+}
+func (UnimplementedWriterServiceServer) GetToken(context.Context, *GetTokenRequest) (*GetTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetToken not implemented")
 }
 
 // UnsafeWriterServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -454,6 +514,78 @@ func _WriterService_SkipAgentSubExpressions_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WriterService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).CreateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_CreateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriterService_GetUserByCred_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByCredRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).GetUserByCred(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_GetUserByCred_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).GetUserByCred(ctx, req.(*GetUserByCredRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriterService_CreateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).CreateToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_CreateToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).CreateToken(ctx, req.(*CreateTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriterService_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriterServiceServer).GetToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriterService_GetToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriterServiceServer).GetToken(ctx, req.(*GetTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WriterService_ServiceDesc is the grpc.ServiceDesc for WriterService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -508,6 +640,22 @@ var WriterService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SkipAgentSubExpressions",
 			Handler:    _WriterService_SkipAgentSubExpressions_Handler,
+		},
+		{
+			MethodName: "CreateUser",
+			Handler:    _WriterService_CreateUser_Handler,
+		},
+		{
+			MethodName: "GetUserByCred",
+			Handler:    _WriterService_GetUserByCred_Handler,
+		},
+		{
+			MethodName: "CreateToken",
+			Handler:    _WriterService_CreateToken_Handler,
+		},
+		{
+			MethodName: "GetToken",
+			Handler:    _WriterService_GetToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

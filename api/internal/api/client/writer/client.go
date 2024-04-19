@@ -169,6 +169,7 @@ func (c *client) wrapExpression(e *domain.Expression) *writergrpc.Expression {
 		return &writergrpc.Expression{}
 	}
 	return &writergrpc.Expression{
+		UserId: e.UserId,
 		ReqUid: e.ReqUid,
 		Value:  e.Value,
 		State:  e.State,
@@ -198,6 +199,7 @@ func (c *client) unwrapExpression(ge *writergrpc.Expression) *domain.Expression 
 
 	return &domain.Expression{
 		Id:             ge.Id,
+		UserId:         ge.UserId,
 		ReqUid:         ge.ReqUid,
 		Value:          ge.Value,
 		Result:         result,
@@ -258,13 +260,11 @@ func (c *client) unwrapOperationDuration(gd *writergrpc.OperationDuration) *doma
 
 func (c *client) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
 	req := &writergrpc.ExpressionByReqUidRequest{UserId: userId, ReqUid: reqUid}
-
 	response, err := c.writerClient.GetExpressionByReqUid(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	return c.unwrapExpression(response), nil
-
 }
 
 func (c *client) CreateExpression(ctx context.Context, e *domain.Expression) (int64, error) {
@@ -309,7 +309,6 @@ func (c *client) GetAgents(ctx context.Context) ([]domain.Agent, error) {
 	}
 	agents := make([]domain.Agent, len(response.Agents))
 	for i, ga := range response.Agents {
-		fmt.Println(c.unwrapAgent(ga))
 		agents[i] = *c.unwrapAgent(ga)
 	}
 	return agents, err

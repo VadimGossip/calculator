@@ -132,6 +132,7 @@ func (c *controller) wrapExpression(e *domain.Expression) *writergrpc.Expression
 	}
 	return &writergrpc.Expression{
 		Id:             e.Id,
+		UserId:         e.UserId,
 		ReqUid:         e.ReqUid,
 		Value:          e.Value,
 		Result:         result,
@@ -145,9 +146,10 @@ func (c *controller) wrapExpression(e *domain.Expression) *writergrpc.Expression
 
 func (c *controller) unwrapExpression(ge *writergrpc.Expression) *domain.Expression {
 	return &domain.Expression{
-		Id:     ge.Id,
+		UserId: ge.UserId,
 		ReqUid: ge.ReqUid,
 		Value:  ge.Value,
+		State:  ge.State,
 	}
 }
 

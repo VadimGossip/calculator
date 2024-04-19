@@ -69,7 +69,6 @@ func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) 
 		*e = *existing
 		return nil
 	}
-
 	e.Id, err = s.writerClient.CreateExpression(ctx, e)
 	if err != nil {
 		return err

@@ -171,8 +171,8 @@ func (r *repository) GetExpressionByReqUid(ctx context.Context, userId int64, re
 					     ,e.eval_started_at
 					     ,e.eval_finished_at
 			   	     FROM expressions e
-                    WHERE e.req_uid = $1
-                      AND e.user_id = $2;`
+                    WHERE e.user_id = $1
+                      AND e.req_uid = $2;`
 
 	if err := r.db.QueryRowContext(ctx, selectStmt, userId, reqUid).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

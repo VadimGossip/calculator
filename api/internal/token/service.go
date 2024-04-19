@@ -39,7 +39,7 @@ func NewService(writerClient writer.Client, hmacSecret []byte, accessTTL, refres
 func (s *service) GenerateTokens(ctx context.Context, userId int64) (string, string, error) {
 	now := time.Now()
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": userId,
+		"userId": userId,
 		"exp":    now.Add(s.accessTTL).Unix(),
 		"iat":    now.Unix(),
 	})
@@ -85,7 +85,7 @@ func (s *service) ParseToken(token string) (int64, error) {
 		return 0, errors.New("invalid claims")
 	}
 
-	userVal, ok := claims["userID"].(string)
+	userVal, ok := claims["userId"].(string)
 	if !ok {
 		return 0, errors.New("invalid user_id")
 	}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/spf13/viper"
 )
 
@@ -10,6 +11,12 @@ func parseConfigFile(configDir string) error {
 	viper.SetConfigName("config")
 
 	if err := viper.ReadInConfig(); err != nil {
+		return err
+	}
+	return nil
+}
+func setFromEnv(cfg *domain.Config) error {
+	if err := envconfig.Process("auth", &cfg.Auth); err != nil {
 		return err
 	}
 	return nil
@@ -23,6 +30,9 @@ func unmarshal(cfg *domain.Config) error {
 		return err
 	}
 	if err := viper.UnmarshalKey("dbagent_grpc", &cfg.DbAgentGrpc); err != nil {
+		return err
+	}
+	if err := viper.UnmarshalKey("auth", &cfg.Auth); err != nil {
 		return err
 	}
 	if err := viper.UnmarshalKey("ampq_queue_struct", &cfg.AMPQStructCfg); err != nil {
@@ -42,6 +52,9 @@ func Init(configDir string) (*domain.Config, error) {
 
 	var cfg domain.Config
 	if err := unmarshal(&cfg); err != nil {
+		return nil, err
+	}
+	if err := setFromEnv(&cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil

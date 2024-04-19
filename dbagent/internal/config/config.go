@@ -37,10 +37,10 @@ func Init(configDir string) (*domain.Config, error) {
 	}
 
 	var cfg domain.Config
-	if err := setFromEnv(&cfg); err != nil {
+	if err := unmarshal(&cfg); err != nil {
 		return nil, err
 	}
-	if err := unmarshal(&cfg); err != nil {
+	if err := setFromEnv(&cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil

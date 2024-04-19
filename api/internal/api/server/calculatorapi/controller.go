@@ -25,6 +25,7 @@ type Controller interface {
 	GetAllOperationDurations(c *gin.Context)
 	Register(c *gin.Context)
 	Login(c *gin.Context)
+	Refresh(c *gin.Context)
 	AuthMiddleware() gin.HandlerFunc
 }
 
@@ -35,8 +36,8 @@ type controller struct {
 
 var _ Controller = (*controller)(nil)
 
-func NewController(expressionService expression.Service) *controller {
-	return &controller{expressionService: expressionService}
+func NewController(expressionService expression.Service, authService auth.Service) *controller {
+	return &controller{expressionService: expressionService, authService: authService}
 }
 
 func (ctrl *controller) getTokenFromRequest(c *gin.Context) (string, error) {
@@ -139,6 +140,29 @@ func (ctrl *controller) Login(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, RegisterUserResponse{Error: errMsg, Status: http.StatusInternalServerError})
+		return
+	}
+	refreshTokenTTL := ctrl.authService.GetRefreshTokenTTL().Seconds()
+	c.SetCookie("refresh-token", refreshToken, int(refreshTokenTTL), "/", "localhost", false, true)
+	c.JSON(http.StatusOK, domain.TokenResponse{Token: accessToken})
+}
+
+func (ctrl *controller) Refresh(c *gin.Context) {
+	cookieRefresh, err := c.Cookie("refresh-token")
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"request": "Refresh",
+		}).Error(err)
+		c.JSON(http.StatusBadRequest, CommonResponse{Error: "parse refresh token error", Status: http.StatusBadRequest})
+		return
+	}
+
+	accessToken, refreshToken, err := ctrl.authService.RefreshTokens(c.Request.Context(), cookieRefresh)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"request": "Refresh",
+		}).Error(err)
+		c.JSON(http.StatusInternalServerError, CommonResponse{Error: "refresh tokens error", Status: http.StatusBadRequest})
 		return
 	}
 	refreshTokenTTL := ctrl.authService.GetRefreshTokenTTL().Seconds()

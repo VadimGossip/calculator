@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type NetServerConfig struct {
 	Host string
 	Port int
@@ -52,10 +54,18 @@ type ExpressionCfg struct {
 	AgentDownCheckPeriod int
 }
 
+type AuthConfig struct {
+	AccessTokenTTL  time.Duration `mapstructure:"access_token_ttl"`
+	RefreshTokenTTL time.Duration `mapstructure:"refresh_token_ttl"`
+	Salt            string
+	Secret          string
+}
+
 type Config struct {
 	Expression       ExpressionCfg
 	AppHttpServer    NetServerConfig
 	DbAgentGrpc      DbAgentCfg
+	Auth             AuthConfig
 	AMPQServerConfig AMPQServerConfig
 	AMPQStructCfg    AMPQStructCfg
 }

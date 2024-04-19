@@ -54,7 +54,7 @@ type WriterServiceClient interface {
 	SaveOperationDuration(ctx context.Context, in *CreateOperDurRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOperationDurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOperDurResponse, error)
 	SkipAgentSubExpressions(ctx context.Context, in *SkipAgentSubExpressionsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	GetUserByCred(ctx context.Context, in *GetUserByCredRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error)
 	GetToken(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*GetTokenResponse, error)
@@ -176,8 +176,8 @@ func (c *writerServiceClient) SkipAgentSubExpressions(ctx context.Context, in *S
 	return out, nil
 }
 
-func (c *writerServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
+func (c *writerServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
+	out := new(CreateUserResponse)
 	err := c.cc.Invoke(ctx, WriterService_CreateUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ type WriterServiceServer interface {
 	SaveOperationDuration(context.Context, *CreateOperDurRequest) (*emptypb.Empty, error)
 	GetOperationDurations(context.Context, *emptypb.Empty) (*GetOperDurResponse, error)
 	SkipAgentSubExpressions(context.Context, *SkipAgentSubExpressionsRequest) (*emptypb.Empty, error)
-	CreateUser(context.Context, *CreateUserRequest) (*User, error)
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	GetUserByCred(context.Context, *GetUserByCredRequest) (*CreateUserResponse, error)
 	CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error)
 	GetToken(context.Context, *GetTokenRequest) (*GetTokenResponse, error)
@@ -274,7 +274,7 @@ func (UnimplementedWriterServiceServer) GetOperationDurations(context.Context, *
 func (UnimplementedWriterServiceServer) SkipAgentSubExpressions(context.Context, *SkipAgentSubExpressionsRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SkipAgentSubExpressions not implemented")
 }
-func (UnimplementedWriterServiceServer) CreateUser(context.Context, *CreateUserRequest) (*User, error) {
+func (UnimplementedWriterServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 func (UnimplementedWriterServiceServer) GetUserByCred(context.Context, *GetUserByCredRequest) (*CreateUserResponse, error) {

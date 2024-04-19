@@ -349,8 +349,8 @@ func (c *client) CreateUser(ctx context.Context, user *domain.User) error {
 	if err != nil {
 		return err
 	}
-	user.Id = response.Id
-	user.RegisteredAt = time.Unix(response.RegisteredAt, 0)
+	user.Id = response.User.Id
+	user.RegisteredAt = time.Unix(response.User.RegisteredAt, 0)
 	return nil
 }
 

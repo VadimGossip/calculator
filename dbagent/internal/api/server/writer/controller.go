@@ -22,6 +22,10 @@ type Controller interface {
 	SaveOperationDuration(ctx context.Context, req *writergrpc.CreateOperDurRequest) (*emptypb.Empty, error)
 	GetOperationDurations(ctx context.Context, _ *emptypb.Empty) (*writergrpc.GetOperDurResponse, error)
 	SkipAgentSubExpressions(ctx context.Context, req *writergrpc.SkipAgentSubExpressionsRequest) (*emptypb.Empty, error)
+	CreateUser(ctx context.Context, req *writergrpc.CreateUserRequest) (*writergrpc.CreateUserResponse, error)
+	GetUserByCred(ctx context.Context, req *writergrpc.GetUserByCredRequest) (*writergrpc.GetUserByCredResponse, error)
+	CreateToken(ctx context.Context, req *writergrpc.CreateTokenRequest) (*writergrpc.CreateTokenResponse, error)
+	GetToken(ctx context.Context, req *writergrpc.GetTokenRequest) (*writergrpc.GetTokenResponse, error)
 }
 
 type controller struct {
@@ -307,7 +311,7 @@ func (c *controller) CreateToken(ctx context.Context, req *writergrpc.CreateToke
 	return &writergrpc.CreateTokenResponse{Token: wrapToken(t)}, nil
 }
 
-func (c *controller) GetUserToken(ctx context.Context, req *writergrpc.GetTokenRequest) (*writergrpc.GetTokenResponse, error) {
+func (c *controller) GetToken(ctx context.Context, req *writergrpc.GetTokenRequest) (*writergrpc.GetTokenResponse, error) {
 	t, err := c.writer.GetToken(ctx, req.TokenValue)
 	if err != nil {
 		return &writergrpc.GetTokenResponse{}, err

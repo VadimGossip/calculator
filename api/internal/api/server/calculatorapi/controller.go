@@ -66,7 +66,7 @@ func (ctrl *controller) AuthMiddleware() gin.HandlerFunc {
 			logrus.WithFields(logrus.Fields{
 				"request": "authMiddleware",
 			}).Error(errMsg)
-			c.JSON(http.StatusUnauthorized, CommonResponse{Error: errMsg, Status: http.StatusUnauthorized})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, CommonResponse{Error: errMsg, Status: http.StatusUnauthorized})
 			return
 		}
 
@@ -76,7 +76,7 @@ func (ctrl *controller) AuthMiddleware() gin.HandlerFunc {
 			logrus.WithFields(logrus.Fields{
 				"request": "authMiddleware",
 			}).Error(errMsg)
-			c.JSON(http.StatusUnauthorized, CommonResponse{Error: errMsg, Status: http.StatusUnauthorized})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, CommonResponse{Error: errMsg, Status: http.StatusUnauthorized})
 			return
 		}
 		c.Set(ctxUserID, id)

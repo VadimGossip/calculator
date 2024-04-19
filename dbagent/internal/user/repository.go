@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/VadimGossip/calculator/dbagent/internal/domain"
-	"time"
 )
 
 type Repository interface {
@@ -27,7 +26,7 @@ func (r *repository) Create(ctx context.Context, user *domain.User) error {
 	createStmt := "insert into users(login, password, admin)" +
 		"values ($1, $2, $3) returning id, registered_at"
 
-	return r.db.QueryRowContext(ctx, createStmt, user.Login, user.Password, user.Admin, time.Now()).
+	return r.db.QueryRowContext(ctx, createStmt, user.Login, user.Password, user.Admin).
 		Scan(&user.Id, &user.RegisteredAt)
 }
 

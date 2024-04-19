@@ -107,6 +107,7 @@ func (r *repository) UpdateExpression(ctx context.Context, e domain.Expression) 
 func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error) {
 	var e domain.Expression
 	selectStmt := `SELECT e.id
+                         ,e.user_id
                          ,e.req_uid
 	    				 ,e.value
 					     ,max(case
@@ -124,6 +125,7 @@ func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64)
 							      where se2.id = $1
 								    and  se2.expression_id = se.expression_id)
 				 group by e.id
+				         ,e.user_id
 				         ,e.req_uid
 					     ,e.value
 					     ,e.result
@@ -132,12 +134,13 @@ func (r *repository) GetExpressionSummaryBySeId(ctx context.Context, seId int64)
 					     ,e.created_at
 					     ,e.eval_started_at
 					     ,e.eval_finished_at;`
-	return e, r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt)
+	return e, r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.UserId, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt)
 }
 
 func (r *repository) GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error) {
 	var e domain.Expression
 	selectStmt := `SELECT e.id
+                         ,e.user_id
 	    				 ,e.req_uid
                          ,e.value
 					     ,e.result
@@ -150,7 +153,7 @@ func (r *repository) GetExpressionBySeId(ctx context.Context, seId int64) (*doma
 				     JOIN sub_expressions se ON se.expression_id = e.id
                     WHERE se.id = $1;`
 
-	if err := r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+	if err := r.db.QueryRowContext(ctx, selectStmt, seId).Scan(&e.Id, &e.UserId, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -162,6 +165,7 @@ func (r *repository) GetExpressionBySeId(ctx context.Context, seId int64) (*doma
 func (r *repository) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
 	var e domain.Expression
 	selectStmt := `SELECT e.id
+                         ,e.user_id
 	    				 ,e.req_uid
                          ,e.value
 					     ,e.result
@@ -174,7 +178,7 @@ func (r *repository) GetExpressionByReqUid(ctx context.Context, userId int64, re
                     WHERE e.user_id = $1
                       AND e.req_uid = $2;`
 
-	if err := r.db.QueryRowContext(ctx, selectStmt, userId, reqUid).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+	if err := r.db.QueryRowContext(ctx, selectStmt, userId, reqUid).Scan(&e.Id, &e.UserId, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}

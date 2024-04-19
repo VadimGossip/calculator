@@ -11,9 +11,6 @@ type service struct {
 
 type Service interface {
 	CreateExpression(ctx context.Context, e *domain.Expression) error
-	UpdateExpression(ctx context.Context, e domain.Expression) error
-	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
-	GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error)
 	GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error)
 	GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
@@ -23,7 +20,6 @@ type Service interface {
 	CreateSubExpression(ctx context.Context, se *domain.SubExpression) error
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error
-	GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error)
 	GetReadySubExpressions(ctx context.Context, eId *int64, skipTimeoutSec uint32) ([]domain.SubExpression, error)
 	SkipAgentSubExpressions(ctx context.Context, agent string) error
 }
@@ -40,17 +36,6 @@ func (s *service) CreateExpression(ctx context.Context, e *domain.Expression) er
 	}
 	e.State = domain.ExpressionStateNew
 	return s.repo.CreateExpression(ctx, e)
-}
-
-func (s *service) UpdateExpression(ctx context.Context, e domain.Expression) error {
-	return s.repo.UpdateExpression(ctx, e)
-}
-func (s *service) GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error) {
-	return s.repo.GetExpressionSummaryBySeId(ctx, seId)
-}
-
-func (s *service) GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error) {
-	return s.repo.GetExpressionBySeId(ctx, seId)
 }
 
 func (s *service) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
@@ -136,14 +121,6 @@ func (s *service) StopSubExpressionEval(ctx context.Context, seId int64, result 
 	}
 
 	return nil
-}
-
-func (s *service) StopSubExpressionEval2(ctx context.Context, seId int64, result *float64) error {
-	return s.repo.StopSubExpressionEval(ctx, seId, result)
-}
-
-func (s *service) GetSubExpressionIsLast(ctx context.Context, seId int64) (bool, error) {
-	return s.repo.GetSubExpressionIsLast(ctx, seId)
 }
 
 func (s *service) GetReadySubExpressions(ctx context.Context, eId *int64, skipTimeoutSec uint32) ([]domain.SubExpression, error) {

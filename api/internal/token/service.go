@@ -85,7 +85,7 @@ func (s *service) ParseToken(token string) (int64, error) {
 		return 0, errors.New("invalid claims")
 	}
 
-	userVal, ok := claims["id"].(string)
+	userVal, ok := claims["userID"].(string)
 	if !ok {
 		return 0, errors.New("invalid user_id")
 	}

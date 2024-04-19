@@ -8,7 +8,6 @@ import (
 	"github.com/VadimGossip/calculator/api/internal/domain"
 	"github.com/VadimGossip/calculator/api/pkg/util"
 	"github.com/golang-jwt/jwt/v5"
-	"strconv"
 	"time"
 )
 
@@ -85,16 +84,11 @@ func (s *service) ParseToken(token string) (int64, error) {
 		return 0, errors.New("invalid claims")
 	}
 
-	userVal, ok := claims["userId"].(string)
+	userId, ok := claims["userId"].(float64)
 	if !ok {
-		return 0, errors.New("invalid user_id")
+		return 0, errors.New("invalid userId")
 	}
-	userId, err := strconv.ParseInt(userVal, 10, 64)
-	if !ok {
-		return 0, errors.New("invalid user_id")
-	}
-
-	return userId, nil
+	return int64(userId), nil
 }
 
 func (s *service) GetRefreshTokenTTL() time.Duration {

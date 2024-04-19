@@ -132,7 +132,6 @@ func (s *service) runHungProcessWatcher(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			logrus.Info("HungProcessWatcher. Checking hung subexpressions")
 			if err := s.prepareAndPublish(ctx, nil); err != nil {
 				logrus.Infof("HungProcessWatcher. prepare and publish err %s", err)
 			}

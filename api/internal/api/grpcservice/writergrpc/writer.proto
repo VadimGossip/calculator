@@ -184,7 +184,7 @@ service WriterService {
   rpc GetOperationDurations(google.protobuf.Empty) returns(GetOperDurResponse);
   rpc SkipAgentSubExpressions(SkipAgentSubExpressionsRequest) returns(google.protobuf.Empty);
   rpc CreateUser(CreateUserRequest) returns(CreateUserResponse);
-  rpc GetUserByCred(GetUserByCredRequest) returns(CreateUserResponse);
+  rpc GetUserByCred(GetUserByCredRequest) returns(GetUserByCredResponse);
   rpc CreateToken(CreateTokenRequest) returns(CreateTokenResponse);
   rpc GetToken(GetTokenRequest)  returns(GetTokenResponse);
 }

@@ -107,6 +107,11 @@ func (ctrl *controller) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, RegisterUserResponse{Error: errMsg, Status: http.StatusBadRequest})
 		return
 	}
+	if u.Password == "" || u.Login == "" {
+		c.JSON(http.StatusBadRequest, RegisterUserResponse{Error: "empty user credentials", Status: http.StatusBadRequest})
+		return
+	}
+
 	if err := ctrl.authService.Register(c.Request.Context(), &u); err != nil {
 		errMsg := fmt.Sprintf("register user error: %s", err)
 		logrus.WithFields(logrus.Fields{

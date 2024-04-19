@@ -4,30 +4,32 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/VadimGossip/calculator/dbagent/internal/domain"
-	"github.com/VadimGossip/calculator/dbagent/pkg/util"
+	"github.com/VadimGossip/calculator/api/internal/api/client/writer"
+	"github.com/VadimGossip/calculator/api/internal/domain"
+	"github.com/VadimGossip/calculator/api/pkg/util"
 	"github.com/golang-jwt/jwt/v5"
 	"strconv"
 	"time"
 )
 
 type service struct {
-	repo       Repository
-	hmacSecret []byte
-	accessTTL  time.Duration
-	refreshTTL time.Duration
+	writerClient writer.Client
+	hmacSecret   []byte
+	accessTTL    time.Duration
+	refreshTTL   time.Duration
 }
 
 type Service interface {
 	GenerateTokens(ctx context.Context, userId int64) (string, string, error)
 	ParseToken(token string) (int64, error)
+	GetRefreshTokenTTL() time.Duration
 	RefreshTokens(ctx context.Context, refreshToken string) (string, string, error)
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(repo Repository, hmacSecret []byte, accessTTL, refreshTTL time.Duration) *service {
-	return &service{repo: repo,
+func NewService(writerClient writer.Client, hmacSecret []byte, accessTTL, refreshTTL time.Duration) *service {
+	return &service{writerClient: writerClient,
 		hmacSecret: hmacSecret,
 		accessTTL:  accessTTL,
 		refreshTTL: refreshTTL,
@@ -52,7 +54,7 @@ func (s *service) GenerateTokens(ctx context.Context, userId int64) (string, str
 		return "", "", err
 	}
 
-	if err = s.repo.Create(ctx, &domain.Token{
+	if err = s.writerClient.CreateToken(ctx, &domain.Token{
 		UserId:    userId,
 		Token:     refreshTokenStr,
 		ExpiresAt: time.Now().Add(s.refreshTTL),
@@ -100,7 +102,7 @@ func (s *service) GetRefreshTokenTTL() time.Duration {
 }
 
 func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
-	token, err := s.repo.Get(ctx, refreshToken)
+	token, err := s.writerClient.GetToken(ctx, refreshToken)
 	if err != nil {
 		return "", "", err
 	}

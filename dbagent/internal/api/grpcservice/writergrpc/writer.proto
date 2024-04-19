@@ -8,14 +8,15 @@ option go_package = "github.com/VadimGossip/calculator/dbagent/api/grpcservice/w
 
 message Expression {
   int64 id = 1;
-  string reqUid = 2;
-  string value = 3;
-  double result = 4;
-  string state = 5;
-  string error = 6;
-  int64 createdAt = 7;
-  int64 evalStartedAt = 8;
-  int64 evalFinishedAt =9;
+  int64 userId = 2;
+  string reqUid = 3;
+  string value = 4;
+  double result = 5;
+  string state = 6;
+  string error = 7;
+  int64 createdAt = 8;
+  int64 evalStartedAt = 9;
+  int64 evalFinishedAt =10;
 }
 
 message SubExpression {
@@ -59,7 +60,8 @@ message ReadySubExpressionsResponse {
 }
 
 message ExpressionByReqUidRequest {
-  string reqUid = 1;
+  int64 userId = 1;
+  string reqUid = 2;
 }
 
 message CreateExpressionRequest {
@@ -76,6 +78,10 @@ message CreateSubExpressionRequest{
 
 message CreateSubExpressionResponse {
   int64 id = 1;
+}
+
+message GetExpressionsRequest {
+  int64 userId = 1;
 }
 
 message GetExpressionsResponse {
@@ -172,7 +178,7 @@ service WriterService {
   rpc GetExpressionByReqUid(ExpressionByReqUidRequest) returns(Expression);
   rpc CreateExpression(CreateExpressionRequest) returns(CreateExpressionResponse);
   rpc CreateSubExpression(CreateSubExpressionRequest) returns(CreateSubExpressionResponse);
-  rpc GetExpressions(google.protobuf.Empty) returns(GetExpressionsResponse);
+  rpc GetExpressions(GetExpressionsRequest) returns(GetExpressionsResponse);
   rpc GetAgents(google.protobuf.Empty) returns(GetAgentsResponse);
   rpc SaveOperationDuration(CreateOperDurRequest) returns(google.protobuf.Empty);
   rpc GetOperationDurations(google.protobuf.Empty) returns(GetOperDurResponse);

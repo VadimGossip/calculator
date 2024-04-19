@@ -17,7 +17,7 @@ type Controller interface {
 	GetExpressionByReqUid(ctx context.Context, req *writergrpc.ExpressionByReqUidRequest) (*writergrpc.Expression, error)
 	CreateExpression(ctx context.Context, req *writergrpc.CreateExpressionRequest) (*writergrpc.CreateExpressionResponse, error)
 	CreateSubExpression(ctx context.Context, req *writergrpc.CreateSubExpressionRequest) (*writergrpc.CreateSubExpressionResponse, error)
-	GetExpressions(ctx context.Context, _ *emptypb.Empty) (*writergrpc.GetExpressionsResponse, error)
+	GetExpressions(ctx context.Context, req *writergrpc.GetExpressionsRequest) (*writergrpc.GetExpressionsResponse, error)
 	GetAgents(ctx context.Context, _ *emptypb.Empty) (*writergrpc.GetAgentsResponse, error)
 	SaveOperationDuration(ctx context.Context, req *writergrpc.CreateOperDurRequest) (*emptypb.Empty, error)
 	GetOperationDurations(ctx context.Context, _ *emptypb.Empty) (*writergrpc.GetOperDurResponse, error)
@@ -185,7 +185,7 @@ func (c *controller) GetReadySubExpressions(ctx context.Context, req *writergrpc
 }
 
 func (c *controller) GetExpressionByReqUid(ctx context.Context, req *writergrpc.ExpressionByReqUidRequest) (*writergrpc.Expression, error) {
-	e, err := c.writer.GetExpressionByReqUid(ctx, req.ReqUid)
+	e, err := c.writer.GetExpressionByReqUid(ctx, req.UserId, req.ReqUid)
 	return c.wrapExpression(e), err
 }
 
@@ -206,8 +206,8 @@ func (c *controller) CreateSubExpression(ctx context.Context, req *writergrpc.Cr
 	return &writergrpc.CreateSubExpressionResponse{Id: se.Id}, nil
 }
 
-func (c *controller) GetExpressions(ctx context.Context, _ *emptypb.Empty) (*writergrpc.GetExpressionsResponse, error) {
-	expressions, err := c.writer.GetExpressions(ctx)
+func (c *controller) GetExpressions(ctx context.Context, req *writergrpc.GetExpressionsRequest) (*writergrpc.GetExpressionsResponse, error) {
+	expressions, err := c.writer.GetExpressions(ctx, req.UserId)
 	if err != nil {
 		return &writergrpc.GetExpressionsResponse{}, err
 	}

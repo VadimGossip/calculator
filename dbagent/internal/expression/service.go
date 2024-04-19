@@ -14,8 +14,8 @@ type Service interface {
 	UpdateExpression(ctx context.Context, e domain.Expression) error
 	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
 	GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error)
-	GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error)
-	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error)
+	GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error)
 	SaveAgentHeartbeat(ctx context.Context, name string) error
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	SaveOperationDuration(ctx context.Context, name string, duration uint32) error
@@ -35,6 +35,10 @@ func NewService(repo Repository) *service {
 }
 
 func (s *service) CreateExpression(ctx context.Context, e *domain.Expression) error {
+	if e.ErrorMsg != "" {
+		e.State = domain.ExpressionStateError
+	}
+	e.State = domain.ExpressionStateNew
 	return s.repo.CreateExpression(ctx, e)
 }
 
@@ -49,12 +53,12 @@ func (s *service) GetExpressionBySeId(ctx context.Context, seId int64) (*domain.
 	return s.repo.GetExpressionBySeId(ctx, seId)
 }
 
-func (s *service) GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error) {
-	return s.repo.GetExpressionByReqUid(ctx, reqUid)
+func (s *service) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
+	return s.repo.GetExpressionByReqUid(ctx, userId, reqUid)
 }
 
-func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
-	return s.repo.GetExpressions(ctx)
+func (s *service) GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error) {
+	return s.repo.GetExpressions(ctx, userId)
 }
 
 func (s *service) SaveAgentHeartbeat(ctx context.Context, name string) error {

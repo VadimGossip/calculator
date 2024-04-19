@@ -22,7 +22,7 @@ type service struct {
 type Service interface {
 	ValidateAndSimplify(value string) (string, error)
 	RegisterExpression(ctx context.Context, e *domain.Expression) error
-	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	SaveOperationDurations(ctx context.Context, data map[string]uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
@@ -61,7 +61,7 @@ func (s *service) ValidateAndSimplify(value string) (string, error) {
 }
 
 func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) error {
-	existing, err := s.writerClient.GetExpressionByReqUid(ctx, e.ReqUid)
+	existing, err := s.writerClient.GetExpressionByReqUid(ctx, e.UserId, e.ReqUid)
 	if err != nil {
 		return err
 	}
@@ -101,8 +101,8 @@ func (s *service) RegisterExpression(ctx context.Context, e *domain.Expression) 
 	return nil
 }
 
-func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
-	return s.writerClient.GetExpressions(ctx)
+func (s *service) GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error) {
+	return s.writerClient.GetExpressions(ctx, userId)
 }
 
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {

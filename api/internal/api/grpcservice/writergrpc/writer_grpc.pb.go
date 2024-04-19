@@ -49,7 +49,7 @@ type WriterServiceClient interface {
 	GetExpressionByReqUid(ctx context.Context, in *ExpressionByReqUidRequest, opts ...grpc.CallOption) (*Expression, error)
 	CreateExpression(ctx context.Context, in *CreateExpressionRequest, opts ...grpc.CallOption) (*CreateExpressionResponse, error)
 	CreateSubExpression(ctx context.Context, in *CreateSubExpressionRequest, opts ...grpc.CallOption) (*CreateSubExpressionResponse, error)
-	GetExpressions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetExpressionsResponse, error)
+	GetExpressions(ctx context.Context, in *GetExpressionsRequest, opts ...grpc.CallOption) (*GetExpressionsResponse, error)
 	GetAgents(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAgentsResponse, error)
 	SaveOperationDuration(ctx context.Context, in *CreateOperDurRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOperationDurations(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetOperDurResponse, error)
@@ -131,7 +131,7 @@ func (c *writerServiceClient) CreateSubExpression(ctx context.Context, in *Creat
 	return out, nil
 }
 
-func (c *writerServiceClient) GetExpressions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetExpressionsResponse, error) {
+func (c *writerServiceClient) GetExpressions(ctx context.Context, in *GetExpressionsRequest, opts ...grpc.CallOption) (*GetExpressionsResponse, error) {
 	out := new(GetExpressionsResponse)
 	err := c.cc.Invoke(ctx, WriterService_GetExpressions_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -223,7 +223,7 @@ type WriterServiceServer interface {
 	GetExpressionByReqUid(context.Context, *ExpressionByReqUidRequest) (*Expression, error)
 	CreateExpression(context.Context, *CreateExpressionRequest) (*CreateExpressionResponse, error)
 	CreateSubExpression(context.Context, *CreateSubExpressionRequest) (*CreateSubExpressionResponse, error)
-	GetExpressions(context.Context, *emptypb.Empty) (*GetExpressionsResponse, error)
+	GetExpressions(context.Context, *GetExpressionsRequest) (*GetExpressionsResponse, error)
 	GetAgents(context.Context, *emptypb.Empty) (*GetAgentsResponse, error)
 	SaveOperationDuration(context.Context, *CreateOperDurRequest) (*emptypb.Empty, error)
 	GetOperationDurations(context.Context, *emptypb.Empty) (*GetOperDurResponse, error)
@@ -259,7 +259,7 @@ func (UnimplementedWriterServiceServer) CreateExpression(context.Context, *Creat
 func (UnimplementedWriterServiceServer) CreateSubExpression(context.Context, *CreateSubExpressionRequest) (*CreateSubExpressionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSubExpression not implemented")
 }
-func (UnimplementedWriterServiceServer) GetExpressions(context.Context, *emptypb.Empty) (*GetExpressionsResponse, error) {
+func (UnimplementedWriterServiceServer) GetExpressions(context.Context, *GetExpressionsRequest) (*GetExpressionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExpressions not implemented")
 }
 func (UnimplementedWriterServiceServer) GetAgents(context.Context, *emptypb.Empty) (*GetAgentsResponse, error) {
@@ -425,7 +425,7 @@ func _WriterService_CreateSubExpression_Handler(srv interface{}, ctx context.Con
 }
 
 func _WriterService_GetExpressions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(GetExpressionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -437,7 +437,7 @@ func _WriterService_GetExpressions_Handler(srv interface{}, ctx context.Context,
 		FullMethod: WriterService_GetExpressions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WriterServiceServer).GetExpressions(ctx, req.(*emptypb.Empty))
+		return srv.(WriterServiceServer).GetExpressions(ctx, req.(*GetExpressionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

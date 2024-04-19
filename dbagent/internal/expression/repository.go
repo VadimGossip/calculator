@@ -13,8 +13,8 @@ type Repository interface {
 	UpdateExpression(ctx context.Context, e domain.Expression) error
 	GetExpressionSummaryBySeId(ctx context.Context, seId int64) (domain.Expression, error)
 	GetExpressionBySeId(ctx context.Context, seId int64) (*domain.Expression, error)
-	GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error)
-	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error)
+	GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error)
 	GetAgent(ctx context.Context, key string) (domain.Agent, error)
 	CreateAgent(ctx context.Context, name string) error
 	SetAgentHeartbeatAt(ctx context.Context, name string) (bool, error)
@@ -82,10 +82,10 @@ func valPointerToNullVal(val any) any {
 }
 
 func (r *repository) CreateExpression(ctx context.Context, e *domain.Expression) error {
-	createStmt := "INSERT INTO expressions(req_uid, value, state, error_msg, created_at)" +
-		"VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at"
+	createStmt := "INSERT INTO expressions(user_id, req_uid, value, state, error_msg, created_at)" +
+		"VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at"
 
-	return r.db.QueryRowContext(ctx, createStmt, e.ReqUid, e.Value, domain.ExpressionStateNew, e.ErrorMsg, time.Now()).
+	return r.db.QueryRowContext(ctx, createStmt, e.UserId, e.ReqUid, e.Value, e.State, e.ErrorMsg, time.Now()).
 		Scan(&e.Id, &e.CreatedAt)
 }
 
@@ -159,7 +159,7 @@ func (r *repository) GetExpressionBySeId(ctx context.Context, seId int64) (*doma
 	return &e, nil
 }
 
-func (r *repository) GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error) {
+func (r *repository) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
 	var e domain.Expression
 	selectStmt := `SELECT e.id
 	    				 ,e.req_uid
@@ -171,9 +171,10 @@ func (r *repository) GetExpressionByReqUid(ctx context.Context, reqUid string) (
 					     ,e.eval_started_at
 					     ,e.eval_finished_at
 			   	     FROM expressions e
-                    WHERE e.req_uid = $1;`
+                    WHERE e.req_uid = $1
+                      AND e.user_id = $2;`
 
-	if err := r.db.QueryRowContext(ctx, selectStmt, reqUid).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+	if err := r.db.QueryRowContext(ctx, selectStmt, userId, reqUid).Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -182,25 +183,27 @@ func (r *repository) GetExpressionByReqUid(ctx context.Context, reqUid string) (
 	return &e, nil
 }
 
-func (r *repository) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
-	selectStmt := `SELECT id 
-                         ,req_uid
-                         ,value
-                         ,result
-                         ,state
-                         ,error_msg
-                         ,created_at
-                         ,eval_started_at
-                         ,eval_finished_at
-                    FROM expressions;`
-	rows, err := r.db.QueryContext(ctx, selectStmt)
+func (r *repository) GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error) {
+	selectStmt := `SELECT e.id 
+                         ,e.user_id
+                         ,e.req_uid
+                         ,e.value
+                         ,e.result
+                         ,e.state
+                         ,e.error_msg
+                         ,e.created_at
+                         ,e.eval_started_at
+                         ,e.eval_finished_at
+                    FROM expressions e
+                   WHERE e.user_id = $1;`
+	rows, err := r.db.QueryContext(ctx, selectStmt, userId)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]domain.Expression, 0)
 	for rows.Next() {
 		var e domain.Expression
-		if err = rows.Scan(&e.Id, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
+		if err = rows.Scan(&e.Id, &e.UserId, &e.ReqUid, &e.Value, &e.Result, &e.State, &e.ErrorMsg, &e.CreatedAt, &e.EvalStartedAt, &e.EvalFinishedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, e)

@@ -19,10 +19,10 @@ type Service interface {
 	StartSubExpressionEval(ctx context.Context, seId int64, agent string) (bool, error)
 	StopSubExpressionEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 	GetReadySubExpressions(ctx context.Context, eId *int64, skipTimeoutSec uint32) ([]domain.SubExpression, error)
-	GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error)
+	GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error)
 	CreateExpression(ctx context.Context, e *domain.Expression) error
 	CreateSubExpression(ctx context.Context, se *domain.SubExpression) error
-	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	SaveOperationDuration(ctx context.Context, name string, duration uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
@@ -55,8 +55,8 @@ func (s *service) GetReadySubExpressions(ctx context.Context, eId *int64, skipTi
 	return s.exprService.GetReadySubExpressions(ctx, eId, skipTimeoutSec)
 }
 
-func (s *service) GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error) {
-	return s.exprService.GetExpressionByReqUid(ctx, reqUid)
+func (s *service) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
+	return s.exprService.GetExpressionByReqUid(ctx, userId, reqUid)
 }
 
 func (s *service) CreateExpression(ctx context.Context, e *domain.Expression) error {
@@ -67,8 +67,8 @@ func (s *service) CreateSubExpression(ctx context.Context, se *domain.SubExpress
 	return s.exprService.CreateSubExpression(ctx, se)
 }
 
-func (s *service) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
-	return s.exprService.GetExpressions(ctx)
+func (s *service) GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error) {
+	return s.exprService.GetExpressions(ctx, userId)
 }
 
 func (s *service) GetAgents(ctx context.Context) ([]domain.Agent, error) {

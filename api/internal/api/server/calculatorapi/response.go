@@ -36,3 +36,9 @@ type StartSubExpressionEvalResponse struct {
 	Status  int    `json:"status" example:"200"`
 	Success bool   `json:"success" example:"false"`
 }
+
+type RegisterUserResponse struct {
+	Id     int64  `json:"id,omitempty"`
+	Error  string `json:"error,omitempty"`
+	Status int    `json:"status" example:"200"`
+}

@@ -3,6 +3,7 @@ package domain
 import "errors"
 
 var ErrUserNotFound = errors.New("user with such credentials not found")
+var ErrUserIdInvalid = errors.New("user id is of invalid type")
 var ErrRefreshTokenExpired = errors.New("refresh token expired")
 var ErrEmptyAuthHeader = errors.New("empty auth header")
 var ErrInvalidAuthHeader = errors.New("invalid auth header")

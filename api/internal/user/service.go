@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
-	"github.com/VadimGossip/calculator/dbagent/internal/domain"
-	"github.com/VadimGossip/calculator/dbagent/internal/token"
+	"github.com/VadimGossip/calculator/api/internal/api/client/writer"
+	"github.com/VadimGossip/calculator/api/internal/domain"
 )
 
 type PasswordHasher interface {
@@ -11,22 +11,20 @@ type PasswordHasher interface {
 }
 
 type service struct {
-	repo         Repository
+	writerClient writer.Client
 	hasher       PasswordHasher
-	tokenService token.Service
 }
 
 type Service interface {
 	Register(ctx context.Context, user *domain.User) error
-	Login(ctx context.Context, credentials domain.Credentials) (string, string, error)
+	Login(ctx context.Context, credentials domain.Credentials) (int64, error)
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(repo Repository, hasher PasswordHasher, tokenService token.Service) *service {
-	return &service{repo: repo,
-		hasher:       hasher,
-		tokenService: tokenService,
+func NewService(writerClient writer.Client, hasher PasswordHasher) *service {
+	return &service{writerClient: writerClient,
+		hasher: hasher,
 	}
 }
 
@@ -36,7 +34,7 @@ func (s *service) Register(ctx context.Context, user *domain.User) error {
 		return err
 	}
 	user.Password = password
-	err = s.repo.Create(ctx, user)
+	err = s.writerClient.CreateUser(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -44,16 +42,16 @@ func (s *service) Register(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-func (s *service) Login(ctx context.Context, credentials domain.Credentials) (string, string, error) {
+func (s *service) Login(ctx context.Context, credentials domain.Credentials) (int64, error) {
 	password, err := s.hasher.Hash(credentials.Password)
 	if err != nil {
-		return "", "", err
+		return 0, err
 	}
 
-	user, err := s.repo.GetByCredentials(ctx, credentials.Login, password)
+	user, err := s.writerClient.GetUserByCredentials(ctx, credentials.Login, password)
 	if err != nil {
-		return "", "", err
+		return 0, err
 	}
 
-	return s.tokenService.GenerateTokens(ctx, user.Id)
+	return user.Id, nil
 }

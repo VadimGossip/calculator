@@ -19,14 +19,18 @@ type Client interface {
 	StartEval(ctx context.Context, seId int64, agentName string) (bool, error)
 	StopEval(ctx context.Context, seId int64, result *float64, errMsg string) error
 	GetReadySubExpressions(ctx context.Context, eId *int64, skipTimeoutSec uint32) ([]domain.ReadySubExpression, error)
-	GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error)
+	GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error)
 	CreateExpression(ctx context.Context, e *domain.Expression) (int64, error)
 	CreateSubExpression(ctx context.Context, se *domain.SubExpression) (int64, error)
-	GetExpressions(ctx context.Context) ([]domain.Expression, error)
+	GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error)
 	GetAgents(ctx context.Context) ([]domain.Agent, error)
 	SaveOperationDuration(ctx context.Context, name string, duration uint32) error
 	GetOperationDurations(ctx context.Context) ([]domain.OperationDuration, error)
 	SkipAgentSubExpressions(ctx context.Context, agentName string) error
+	CreateUser(ctx context.Context, user *domain.User) error
+	GetUserByCredentials(ctx context.Context, login, password string) (*domain.User, error)
+	CreateToken(ctx context.Context, token *domain.Token) error
+	GetToken(ctx context.Context, tokenValue string) (*domain.Token, error)
 }
 
 type client struct {
@@ -252,8 +256,8 @@ func (c *client) unwrapOperationDuration(gd *writergrpc.OperationDuration) *doma
 	}
 }
 
-func (c *client) GetExpressionByReqUid(ctx context.Context, reqUid string) (*domain.Expression, error) {
-	req := &writergrpc.ExpressionByReqUidRequest{ReqUid: reqUid}
+func (c *client) GetExpressionByReqUid(ctx context.Context, userId int64, reqUid string) (*domain.Expression, error) {
+	req := &writergrpc.ExpressionByReqUidRequest{UserId: userId, ReqUid: reqUid}
 
 	response, err := c.writerClient.GetExpressionByReqUid(ctx, req)
 	if err != nil {
@@ -283,8 +287,10 @@ func (c *client) CreateSubExpression(ctx context.Context, se *domain.SubExpressi
 	return response.Id, err
 }
 
-func (c *client) GetExpressions(ctx context.Context) ([]domain.Expression, error) {
-	response, err := c.writerClient.GetExpressions(ctx, &emptypb.Empty{})
+func (c *client) GetExpressions(ctx context.Context, userId int64) ([]domain.Expression, error) {
+	req := &writergrpc.GetExpressionsRequest{UserId: userId}
+
+	response, err := c.writerClient.GetExpressions(ctx, req)
 	if err != nil {
 		return nil, err
 	}

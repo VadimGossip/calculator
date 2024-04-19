@@ -39,9 +39,9 @@ func NewService(writerClient writer.Client, hmacSecret []byte, accessTTL, refres
 func (s *service) GenerateTokens(ctx context.Context, userId int64) (string, string, error) {
 	now := time.Now()
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  userId,
-		"exp": now.Add(s.accessTTL).Unix(),
-		"iat": now.Unix(),
+		"userID": userId,
+		"exp":    now.Add(s.accessTTL).Unix(),
+		"iat":    now.Unix(),
 	})
 
 	accessTokenStr, err := t.SignedString(s.hmacSecret)
